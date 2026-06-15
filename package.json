@@ -1,0 +1,27 @@
+{
+  "name": "react-arch",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Declarative TypeScript platform for creating, editing, rendering, and exporting semantic building models.",
+  "packageManager": "pnpm@10.26.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@react-arch/studio",
+    "dev:all": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "studio": "pnpm --filter @react-arch/studio dev"
+  },
+  "devDependencies": {
+    "oxlint": "^0.15.0",
+    "tsdown": "^0.6.0",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}

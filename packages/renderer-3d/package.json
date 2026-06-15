@@ -1,0 +1,36 @@
+{
+  "name": "@react-arch/renderer-3d",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "lint": "oxlint src"
+  },
+  "dependencies": {
+    "@react-arch/core": "workspace:*",
+    "@react-arch/geometry": "workspace:*",
+    "@react-arch/shared": "workspace:*"
+  },
+  "peerDependencies": {
+    "@react-three/drei": ">=9",
+    "@react-three/fiber": ">=8",
+    "react": "^18.3.0",
+    "three": ">=0.160"
+  },
+  "devDependencies": {
+    "@react-three/drei": "^9.114.0",
+    "@react-three/fiber": "^8.17.10",
+    "@types/react": "^18.3.12",
+    "@types/three": "^0.169.0",
+    "react": "^18.3.1",
+    "three": "^0.169.0",
+    "typescript": "^5.7.2"
+  }
+}
