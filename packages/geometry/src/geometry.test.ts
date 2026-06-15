@@ -1,0 +1,74 @@
+import { describe, expect, it } from "vitest";
+import { polygonArea, polygonCentroid } from "./polygon.js";
+import { openingFits, openingSpan, wallLength, wallPolygon } from "./wall.js";
+import { segmentIntersection } from "./line.js";
+import { findSnap, snapToGrid } from "./snap.js";
+
+describe("polygon", () => {
+  it("computes the area of a unit square", () => {
+    expect(polygonArea([[0, 0], [1, 0], [1, 1], [0, 1]])).toBeCloseTo(1);
+  });
+
+  it("computes the centroid of a square", () => {
+    const c = polygonCentroid([[0, 0], [2, 0], [2, 2], [0, 2]]);
+    expect(c[0]).toBeCloseTo(1);
+    expect(c[1]).toBeCloseTo(1);
+  });
+});
+
+describe("wall", () => {
+  const wall = { start: [0, 0] as [number, number], end: [4, 0] as [number, number], thickness: 0.2 };
+
+  it("measures length", () => {
+    expect(wallLength(wall)).toBeCloseTo(4);
+  });
+
+  it("derives a 4-vertex polygon of the right area", () => {
+    const poly = wallPolygon(wall);
+    expect(poly).toHaveLength(4);
+    expect(polygonArea(poly)).toBeCloseTo(4 * 0.2);
+  });
+
+  it("places openings along the centerline", () => {
+    const span = openingSpan(wall, { offset: 2, width: 1 });
+    expect(span.center[0]).toBeCloseTo(2);
+    expect(span.start[0]).toBeCloseTo(1.5);
+    expect(span.end[0]).toBeCloseTo(2.5);
+  });
+
+  it("detects openings that do not fit", () => {
+    expect(openingFits(wall, { offset: 2, width: 1 })).toBe(true);
+    expect(openingFits(wall, { offset: 0.1, width: 1 })).toBe(false);
+  });
+});
+
+describe("line", () => {
+  it("finds segment intersections", () => {
+    const p = segmentIntersection(
+      { a: [0, 0], b: [2, 2] },
+      { a: [0, 2], b: [2, 0] },
+    );
+    expect(p).not.toBeNull();
+    expect(p![0]).toBeCloseTo(1);
+    expect(p![1]).toBeCloseTo(1);
+  });
+
+  it("returns null for parallel segments", () => {
+    expect(
+      segmentIntersection({ a: [0, 0], b: [1, 0] }, { a: [0, 1], b: [1, 1] }),
+    ).toBeNull();
+  });
+});
+
+describe("snap", () => {
+  it("snaps to grid", () => {
+    expect(snapToGrid([0.13, 0.49], 0.25)).toEqual([0.25, 0.5]);
+  });
+
+  it("prefers endpoint snaps", () => {
+    const snap = findSnap([0.05, 0.0], [{ a: [0, 0], b: [4, 0] }], {
+      tolerance: 0.2,
+    });
+    expect(snap?.kind).toBe("endpoint");
+  });
+});

@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["vite/client", "node"],
+    "paths": {
+      "@react-arch/shared": ["../../packages/shared/src/index.ts"],
+      "@react-arch/geometry": ["../../packages/geometry/src/index.ts"],
+      "@react-arch/core": ["../../packages/core/src/index.ts"],
+      "@react-arch/react": ["../../packages/react/src/index.ts"],
+      "@react-arch/renderer-2d": ["../../packages/renderer-2d/src/index.ts"],
+      "@react-arch/renderer-3d": ["../../packages/renderer-3d/src/index.ts"],
+      "@react-arch/exporters": ["../../packages/exporters/src/index.ts"],
+      "@react-arch/validation": ["../../packages/validation/src/index.ts"],
+      "@react-arch/importers": ["../../packages/importers/src/index.ts"],
+      "@react-arch/examples": ["../../examples/buildings/src/index.ts"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}
