@@ -4,6 +4,7 @@ import { createFloor, createOpening, createRoom, createWall, deleteWall, rectRoo
 import { History } from "./history.js";
 import { deserialize, serialize } from "./serialize.js";
 import { findWall } from "./model.js";
+import { furnitureDims } from "./furniture.js";
 
 function seed() {
   const doc = createEmptyDocument({ name: "Test" });
@@ -58,6 +59,19 @@ describe("history", () => {
     expect(undone.buildings[0]!.floors[0]!.walls).toHaveLength(0);
     const redone = h.redo()!;
     expect(redone.buildings[0]!.floors[0]!.walls).toHaveLength(1);
+  });
+});
+
+describe("furniture", () => {
+  it("returns a known footprint and applies scale", () => {
+    expect(furnitureDims("bed")).toMatchObject({ width: 1, depth: 1 });
+    const scaled = furnitureDims("bed", [1.6, 2, 1]);
+    expect(scaled.width).toBeCloseTo(1.6);
+    expect(scaled.depth).toBeCloseTo(2);
+  });
+
+  it("falls back for unknown types", () => {
+    expect(furnitureDims("unknown-thing").width).toBeGreaterThan(0);
   });
 });
 

@@ -1,5 +1,5 @@
 import type { BuildingDocument, EntityRef, Floor } from "@react-arch/core";
-import { allFloors } from "@react-arch/core";
+import { allFloors, furnitureDims } from "@react-arch/core";
 import {
   type Vec2,
   distance,
@@ -40,10 +40,20 @@ export interface OpeningDraw {
   normal: Vec2;
   width: number;
 }
+export interface ObjectDraw {
+  id: string;
+  floorId: string;
+  type: string;
+  center: Vec2;
+  /** Footprint size [width(X), depth(Y)] in metres. */
+  size: [number, number];
+  rotation: number;
+}
 export interface PlanScene {
   walls: WallDraw[];
   rooms: RoomDraw[];
   openings: OpeningDraw[];
+  objects: ObjectDraw[];
 }
 
 function visibleFloors(doc: BuildingDocument, floorIds: string[] | "all"): Floor[] {
@@ -56,7 +66,7 @@ export function buildPlanScene(
   doc: BuildingDocument,
   floorIds: string[] | "all",
 ): PlanScene {
-  const scene: PlanScene = { walls: [], rooms: [], openings: [] };
+  const scene: PlanScene = { walls: [], rooms: [], openings: [], objects: [] };
   for (const floor of visibleFloors(doc, floorIds)) {
     for (const r of floor.rooms) {
       scene.rooms.push({
@@ -96,6 +106,17 @@ export function buildPlanScene(
         width: o.width,
       });
     }
+    for (const ob of floor.objects) {
+      const d = furnitureDims(ob.type, ob.scale);
+      scene.objects.push({
+        id: ob.id,
+        floorId: floor.id,
+        type: ob.type,
+        center: [ob.position[0], ob.position[1]],
+        size: [d.width, d.depth],
+        rotation: ob.rotation[2],
+      });
+    }
   }
   return scene;
 }
@@ -106,10 +127,17 @@ export function hitTest(
   point: Vec2,
   tolerance: number,
 ): EntityRef | null {
-  // Openings first (smallest), then walls, then rooms.
+  // Openings first (smallest), then furniture, then walls, then rooms.
   for (const o of scene.openings) {
     if (distance(point, o.center) <= Math.max(tolerance, o.width / 2)) {
       return { kind: "opening", id: o.id };
+    }
+  }
+  for (const ob of scene.objects) {
+    const dx = Math.abs(point[0] - ob.center[0]);
+    const dy = Math.abs(point[1] - ob.center[1]);
+    if (dx <= ob.size[0] / 2 + tolerance && dy <= ob.size[1] / 2 + tolerance) {
+      return { kind: "object", id: ob.id };
     }
   }
   for (const w of scene.walls) {

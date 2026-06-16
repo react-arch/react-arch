@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BuildingDocument, EntityRef } from "@react-arch/core";
+import { furnitureColor } from "@react-arch/core";
 import { bounds, type Vec2 } from "@react-arch/geometry";
 import { buildPlanScene, hitTest, type PlanScene } from "./scene.js";
 
@@ -203,6 +204,10 @@ function draw(
     const isSel = selected?.kind === "wall" && selected.id === w.id;
     fillPolygon(ctx, w.polygon, isSel ? COLORS.select : COLORS.wall, toScreen, COLORS.wallStroke);
   }
+  // Furniture footprints (under openings/labels, over rooms).
+  for (const ob of scene.objects) {
+    drawFurniture(ctx, ob, vp, toScreen, selected?.kind === "object" && selected.id === ob.id);
+  }
   // Openings.
   for (const o of scene.openings) {
     drawOpening(ctx, o, toScreen, selected?.kind === "opening" && selected.id === o.id);
@@ -273,6 +278,47 @@ function fillPolygon(ctx: CanvasRenderingContext2D, poly: Vec2[], fill: string, 
     ctx.strokeStyle = stroke;
     ctx.stroke();
   }
+}
+
+function drawFurniture(
+  ctx: CanvasRenderingContext2D,
+  ob: PlanScene["objects"][number],
+  vp: Viewport,
+  toScreen: (p: Vec2) => Vec2,
+  selected: boolean,
+) {
+  const c = toScreen(ob.center);
+  const w = ob.size[0] * vp.scale;
+  const h = ob.size[1] * vp.scale;
+  ctx.save();
+  ctx.translate(c[0], c[1]);
+  if (ob.rotation) ctx.rotate(ob.rotation);
+  const color = selected ? COLORS.select : furnitureColor(ob.type);
+  ctx.fillStyle = color + "33"; // translucent fill
+  ctx.strokeStyle = color;
+  ctx.lineWidth = selected ? 2 : 1.25;
+  const r = Math.min(4, w / 4, h / 4);
+  roundRect(ctx, -w / 2, -h / 2, w, h, r);
+  ctx.fill();
+  ctx.stroke();
+  if (Math.min(w, h) > 26) {
+    ctx.fillStyle = COLORS.roomLabel;
+    ctx.font = "9px ui-sans-serif, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(ob.type, 0, 0);
+  }
+  ctx.restore();
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 }
 
 function drawOpening(

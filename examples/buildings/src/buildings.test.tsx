@@ -36,4 +36,11 @@ describe("example buildings render to valid models", () => {
     const doc = renderToDocument(createElement(ProgrammaticBlock));
     expect(allFloors(doc)).toHaveLength(3);
   });
+
+  it("captures fixtures declared inside rooms (e.g. StandardBathroom)", () => {
+    const doc = renderToDocument(createElement(ModernHouse));
+    const objects = allFloors(doc).flatMap((f) => f.objects);
+    expect(objects.length).toBeGreaterThan(0);
+    expect(objects.map((o) => o.type)).toContain("toilet");
+  });
 });

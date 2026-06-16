@@ -1,4 +1,4 @@
-import { findFloor, findOpening, findRoom, findWall, type BuildingDocument } from "@react-arch/core";
+import { allFloors, findFloor, findOpening, findRoom, findWall, furnitureDims, type BuildingDocument } from "@react-arch/core";
 import { polygonArea, wallLength } from "@react-arch/geometry";
 import { useStudio } from "../store.js";
 
@@ -16,7 +16,7 @@ export function Properties({ doc }: { doc: BuildingDocument }) {
         {selection?.kind === "room" && <RoomProps doc={doc} id={selection.id} />}
         {selection?.kind === "opening" && <OpeningProps doc={doc} id={selection.id} />}
         {selection?.kind === "floor" && <FloorProps doc={doc} id={selection.id} />}
-        {selection?.kind === "object" && <div className="text-zinc-400">Object: {selection.id}</div>}
+        {selection?.kind === "object" && <ObjectProps doc={doc} id={selection.id} />}
       </div>
     </div>
   );
@@ -101,6 +101,23 @@ function OpeningProps({ doc, id }: { doc: BuildingDocument; id: string }) {
       <Field label="Offset" value={`${o.offset} m`} />
       <Field label="Sill height" value={`${o.sillHeight} m`} />
       <Field label="Wall" value={o.wallId} />
+    </div>
+  );
+}
+
+function ObjectProps({ doc, id }: { doc: BuildingDocument; id: string }) {
+  const obj = allFloors(doc)
+    .flatMap((f) => f.objects)
+    .find((o) => o.id === id);
+  if (!obj) return <Empty />;
+  const d = furnitureDims(obj.type, obj.scale);
+  return (
+    <div className="text-xs">
+      <Header kind="Furniture" name={obj.type} />
+      <Field label="Position" value={`${obj.position[0].toFixed(2)}, ${obj.position[1].toFixed(2)}`} />
+      <Field label="Width" value={`${d.width.toFixed(2)} m`} />
+      <Field label="Depth" value={`${d.depth.toFixed(2)} m`} />
+      <Field label="Height" value={`${d.height.toFixed(2)} m`} />
     </div>
   );
 }
