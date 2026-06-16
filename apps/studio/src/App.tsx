@@ -5,7 +5,9 @@ import {
   renderComposition,
   subscribeCompositions,
 } from "@react-arch/react";
-import { Root } from "@react-arch/examples";
+// The building registry root. In-repo this resolves to the bundled examples;
+// the `react-arch studio` CLI aliases it to the user's project entry.
+import Root from "virtual:react-arch-root";
 import { createEmptyDocument, type BuildingDocument } from "@react-arch/core";
 import { validateDocument, type Diagnostic } from "@react-arch/validation";
 import { useStudio } from "./store.js";

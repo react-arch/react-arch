@@ -40,6 +40,28 @@ pnpm dev
 multi-floor house already loaded. Edit any building under
 `examples/buildings/src/` and the Studio updates live.
 
+## Using it in your own project
+
+React Arch ships two CLIs (Remotion-style):
+
+```bash
+# Scaffold a new project
+npm create react-arch-app my-building
+cd my-building
+npm install
+
+# Launch the Studio for your project's registered buildings
+npm run studio          # → react-arch studio
+# or directly:
+npx react-arch studio [entry] --port 5173 --open
+```
+
+`react-arch studio` loads your **registration root** — a file that
+default-exports a component rendering `<Composition id name component />`
+entries — and renders the selected building. If you don't pass an `entry`, it
+looks for `src/Root.tsx`, `src/root.tsx`, `src/index.tsx`, or `src/index.ts`.
+Your code stays the source of truth; the Studio just visualises it.
+
 ## The core idea
 
 ```
@@ -69,7 +91,9 @@ from that model. See [docs/adr](./docs/adr) for the decisions behind this.
 | `@react-arch/renderer-3d` | React Three Fiber renderer (geometry generated from the model) |
 | `@react-arch/exporters` | JSON (lossless), SVG (scaled plan), GLTF/GLB |
 | `@react-arch/importers` | JSON importer (+ interface for DXF/IFC/SVG later) |
-| `apps/studio` | React Arch Studio — the visualizer |
+| `react-arch` | CLI — `react-arch studio` launches the Studio for a project |
+| `create-react-arch-app` | Scaffolder — `npm create react-arch-app` |
+| `apps/studio` | React Arch Studio — the visualizer (driven by the CLI) |
 | `examples/buildings` | Sample buildings + reusable modules, registered Remotion-style |
 
 ## Studio features
