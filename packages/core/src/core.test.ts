@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyDocument } from "./defaults.js";
-import { createFloor, createOpening, createRoom, createWall, deleteWall, rectRoomPolygon } from "./commands.js";
+import { createFloor, createOpening, createRoom, createWall, deleteWall, duplicateFloor, rectRoomPolygon, updateRoom } from "./commands.js";
 import { History } from "./history.js";
 import { deserialize, serialize } from "./serialize.js";
 import { findWall } from "./model.js";
@@ -41,10 +41,44 @@ describe("commands", () => {
     expect(o.warnings.some((x) => x.code === "opening-overflow")).toBe(true);
   });
 
+  it("warns when an opening is taller than its wall", () => {
+    const { doc, floorId } = seed();
+    const w = createWall(doc, { floorId, start: [0, 0], end: [4, 0], height: 2 });
+    const wallId = w.changes[0]!.id;
+    const o = createOpening(w.document, { wallId, type: "window", offset: 2, width: 1, height: 1.5, sillHeight: 0.8 });
+    expect(o.warnings.some((x) => x.code === "opening-overflow")).toBe(true);
+  });
+
   it("makes a rectangular room", () => {
     const { doc, floorId } = seed();
     const r = createRoom(doc, { floorId, name: "Living", polygon: rectRoomPolygon(0, 0, 5, 4) });
     expect(r.document.buildings[0]!.floors[0]!.rooms[0]!.polygon).toHaveLength(4);
+  });
+
+  it("removes deleted walls from room boundaries", () => {
+    const { doc, floorId } = seed();
+    const w = createWall(doc, { floorId, start: [0, 0], end: [4, 0] });
+    const wallId = w.changes[0]!.id;
+    const r = createRoom(w.document, { floorId, name: "Living", polygon: rectRoomPolygon(0, 0, 4, 4) });
+    const roomId = r.changes[0]!.id;
+    const withBoundary = updateRoom(r.document, roomId, { boundaryWallIds: [wallId] });
+    const d = deleteWall(withBoundary.document, wallId);
+    expect(d.document.buildings[0]!.floors[0]!.rooms[0]!.boundaryWallIds).toEqual([]);
+  });
+
+  it("remaps room boundary walls when duplicating a floor", () => {
+    const { doc, floorId } = seed();
+    const w = createWall(doc, { floorId, start: [0, 0], end: [4, 0] });
+    const wallId = w.changes[0]!.id;
+    const r = createRoom(w.document, { floorId, name: "Living", polygon: rectRoomPolygon(0, 0, 4, 4) });
+    const roomId = r.changes[0]!.id;
+    const withBoundary = updateRoom(r.document, roomId, { boundaryWallIds: [wallId] });
+    const duplicated = duplicateFloor(withBoundary.document, floorId);
+    const copiedFloor = duplicated.document.buildings[0]!.floors.find((f) => f.id === duplicated.changes[0]!.id)!;
+    const copiedWallIds = new Set(copiedFloor.walls.map((wall) => wall.id));
+    expect(copiedFloor.rooms[0]!.boundaryWallIds).toHaveLength(1);
+    expect(copiedFloor.rooms[0]!.boundaryWallIds![0]).not.toBe(wallId);
+    expect(copiedWallIds.has(copiedFloor.rooms[0]!.boundaryWallIds![0]!)).toBe(true);
   });
 });
 
@@ -57,6 +91,17 @@ describe("history", () => {
     expect(h.canUndo()).toBe(true);
     const undone = h.undo()!;
     expect(undone.buildings[0]!.floors[0]!.walls).toHaveLength(0);
+    const redone = h.redo()!;
+    expect(redone.buildings[0]!.floors[0]!.walls).toHaveLength(1);
+  });
+
+  it("keeps snapshots isolated from later mutations", () => {
+    const { doc, floorId } = seed();
+    const h = new History();
+    const r = createWall(doc, { floorId, start: [0, 0], end: [4, 0] });
+    h.push("create wall", doc, r.document);
+    r.document.buildings[0]!.floors[0]!.walls.length = 0;
+    h.undo();
     const redone = h.redo()!;
     expect(redone.buildings[0]!.floors[0]!.walls).toHaveLength(1);
   });

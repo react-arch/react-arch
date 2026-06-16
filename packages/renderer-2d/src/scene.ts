@@ -2,7 +2,6 @@ import type { BuildingDocument, EntityRef, Floor } from "@react-arch/core";
 import { allFloors, furnitureDims } from "@react-arch/core";
 import {
   type Vec2,
-  distance,
   normal,
   openingSpan,
   pointInPolygon,

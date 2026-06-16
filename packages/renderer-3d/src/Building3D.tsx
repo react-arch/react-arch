@@ -42,7 +42,7 @@ function CameraRig({ scene }: { scene: Scene3D }) {
       controls.current.update();
     }
   }, [scene, camera]);
-  return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={0.1} />;
+  return <OrbitControls ref={controls} makeDefault enableDamping />;
 }
 
 export function Building3D(props: Building3DProps) {

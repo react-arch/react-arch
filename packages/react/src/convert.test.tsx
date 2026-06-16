@@ -87,3 +87,60 @@ describe("interior doors between adjacent rooms", () => {
     expect(g.rooms[1]!.boundaryWallIds).toContain(door.wallId);
   });
 });
+
+describe("stable generated model ids", () => {
+  function GeneratedIds() {
+    return (
+      <Building name="Generated">
+        <Floor name="Ground" elevation={0}>
+          <Room name="A" x={0} y={0} width={4} depth={4}>
+            <Door wall="south" />
+          </Room>
+        </Floor>
+      </Building>
+    );
+  }
+
+  it("derives identical ids for identical JSX", () => {
+    const a = renderToDocument(<GeneratedIds />);
+    const b = renderToDocument(<GeneratedIds />);
+
+    expect(a.id).toBe(b.id);
+    expect(a.buildings[0]!.id).toBe(b.buildings[0]!.id);
+    expect(a.buildings[0]!.floors[0]!.walls.map((w) => w.id)).toEqual(
+      b.buildings[0]!.floors[0]!.walls.map((w) => w.id),
+    );
+    expect(a.buildings[0]!.floors[0]!.openings[0]!.id).toBe(b.buildings[0]!.floors[0]!.openings[0]!.id);
+  });
+});
+
+describe("partial shared walls", () => {
+  function SplitNeighbour() {
+    return (
+      <Building name="Split Neighbour">
+        <Floor id="g" name="G" elevation={0} height={2.8}>
+          <Room id="left" name="Left" x={0} y={0} width={5} depth={4} />
+          <Room id="rightTop" name="Right Top" x={5} y={0} width={4} depth={2} />
+          <Room id="rightBottom" name="Right Bottom" x={5} y={2} width={4} depth={2}>
+            <Door wall="west" offset={1} width={0.9} />
+          </Room>
+        </Floor>
+      </Building>
+    );
+  }
+
+  it("merges collinear overlapping shared wall segments", () => {
+    const doc = renderToDocument(<SplitNeighbour />);
+    const floor = doc.buildings[0]!.floors[0]!;
+    const shared = floor.walls.filter(
+      (w) => Math.abs(w.start[0] - 5) < 1e-6 && Math.abs(w.end[0] - 5) < 1e-6 && Math.min(w.start[1], w.end[1]) === 0 && Math.max(w.start[1], w.end[1]) === 4,
+    );
+    const door = floor.openings.find((o) => o.type === "door")!;
+
+    expect(shared).toHaveLength(1);
+    expect(door.wallId).toBe(shared[0]!.id);
+    expect(floor.rooms.find((r) => r.id === "left")!.boundaryWallIds).toContain(shared[0]!.id);
+    expect(floor.rooms.find((r) => r.id === "rightTop")!.boundaryWallIds).toContain(shared[0]!.id);
+    expect(floor.rooms.find((r) => r.id === "rightBottom")!.boundaryWallIds).toContain(shared[0]!.id);
+  });
+});
