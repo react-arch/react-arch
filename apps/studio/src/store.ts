@@ -38,7 +38,16 @@ export const useStudio = create<StudioState>((set) => ({
   setComposition: (id) => set({ compositionId: id, selection: null, activeFloor: "all" }),
 
   viewMode: "split",
-  setViewMode: (m) => set({ viewMode: m }),
+  setViewMode: (m) =>
+    set((s) => {
+      // Clamp a display mode that the new view can't express.
+      const is3D = m === "3d" || m === "split";
+      const is2D = m === "2d" || m === "split";
+      let floorDisplay = s.floorDisplay;
+      if (floorDisplay === "exploded" && !is3D) floorDisplay = "all";
+      if (floorDisplay === "ghost" && !is2D) floorDisplay = "all";
+      return { viewMode: m, floorDisplay };
+    }),
 
   activeFloor: "all",
   setActiveFloor: (f) => set({ activeFloor: f }),

@@ -9,12 +9,13 @@ import {
   Grid3x3,
   Layers,
   Ruler,
+  SquareDashed,
   Square,
 } from "lucide-react";
 import type { BuildingComposition } from "@react-arch/react";
 import { allFloors, type BuildingDocument } from "@react-arch/core";
 import { exportJSON, exportSVG, exportGLTF } from "@react-arch/exporters";
-import { useStudio, type ViewMode } from "../store.js";
+import { useStudio, type FloorDisplay, type ViewMode } from "../store.js";
 import { download } from "../lib.js";
 
 const VIEW_MODES: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
@@ -36,6 +37,19 @@ export function Toolbar({
   const [exporting, setExporting] = useState(false);
   const floors = allFloors(doc);
 
+  // Which controls make sense for the active view.
+  const is3D = s.viewMode === "3d" || s.viewMode === "split";
+  const is2D = s.viewMode === "2d" || s.viewMode === "split";
+  const showFloorNav = is2D || is3D; // not stack (all floors) / not json
+  const showMeasurements = is2D || s.viewMode === "stack";
+
+  const displayOptions: { v: FloorDisplay; label: string }[] = [
+    { v: "all", label: "Full building" },
+    { v: "isolated", label: "Isolated floor" },
+    ...(is2D ? [{ v: "ghost" as const, label: "Ghost floors" }] : []),
+    ...(is3D ? [{ v: "exploded" as const, label: "Exploded" }] : []),
+  ];
+
   const onExport = async (kind: "json" | "svg" | "glb") => {
     try {
       setExporting(true);
@@ -51,6 +65,8 @@ export function Toolbar({
     }
   };
 
+  const hasToggles = is2D || showMeasurements || is3D;
+
   return (
     <div className="flex items-center gap-3 px-3 h-11 border-b border-edge bg-panel select-none">
       <div className="flex items-center gap-2 pr-3 border-r border-edge">
@@ -61,7 +77,7 @@ export function Toolbar({
         </span>
       </div>
 
-      {/* Composition selector */}
+      {/* Composition selector — always relevant */}
       <select
         className="bg-panel2 border border-edge rounded px-2 py-1 text-xs outline-none focus:border-accent"
         value={s.compositionId ?? ""}
@@ -74,7 +90,7 @@ export function Toolbar({
         ))}
       </select>
 
-      {/* View modes */}
+      {/* View modes — always relevant */}
       <div className="flex items-center gap-0.5 bg-panel2 rounded p-0.5 border border-edge">
         {VIEW_MODES.map((m) => (
           <button
@@ -91,51 +107,70 @@ export function Toolbar({
         ))}
       </div>
 
-      {/* Floor selector */}
-      <select
-        className="bg-panel2 border border-edge rounded px-2 py-1 text-xs outline-none focus:border-accent"
-        value={s.activeFloor}
-        onChange={(e) => s.setActiveFloor(e.target.value)}
-      >
-        <option value="all">All Floors</option>
-        {floors.map((f) => (
-          <option key={f.id} value={f.id}>
-            {f.name}
-          </option>
-        ))}
-      </select>
+      {/* Floor navigation — hidden for Stack (all floors) and JSON */}
+      {showFloorNav && (
+        <div className="flex items-center gap-2 pl-3 border-l border-edge">
+          <select
+            className="bg-panel2 border border-edge rounded px-2 py-1 text-xs outline-none focus:border-accent"
+            value={s.activeFloor}
+            onChange={(e) => s.setActiveFloor(e.target.value)}
+          >
+            <option value="all">All Floors</option>
+            {floors.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
+            ))}
+          </select>
 
-      <select
-        className="bg-panel2 border border-edge rounded px-2 py-1 text-xs outline-none focus:border-accent"
-        value={s.floorDisplay}
-        onChange={(e) => s.setFloorDisplay(e.target.value as never)}
-        title="Floor display mode"
-      >
-        <option value="all">Full building</option>
-        <option value="isolated">Isolated floor</option>
-        <option value="ghost">Ghost floors</option>
-        <option value="exploded">Exploded</option>
-      </select>
+          <select
+            className="bg-panel2 border border-edge rounded px-2 py-1 text-xs outline-none focus:border-accent"
+            value={s.floorDisplay}
+            onChange={(e) => s.setFloorDisplay(e.target.value as FloorDisplay)}
+            title="Floor display mode"
+          >
+            {displayOptions.map((o) => (
+              <option key={o.v} value={o.v}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="flex-1" />
 
-      {/* Display toggles */}
-      <ToggleButton active={s.showGrid} onClick={() => s.toggle("showGrid")} title="Grid">
-        <Grid3x3 size={14} />
-      </ToggleButton>
-      <ToggleButton active={s.showMeasurements} onClick={() => s.toggle("showMeasurements")} title="Measurements">
-        <Ruler size={14} />
-      </ToggleButton>
-      <ToggleButton active={s.wireframe} onClick={() => s.toggle("wireframe")} title="Wireframe (3D)">
-        <Square size={14} />
-      </ToggleButton>
-      <ToggleButton active={s.xray} onClick={() => s.toggle("xray")} title="X-ray (3D)">
-        <Eye size={14} />
-      </ToggleButton>
+      {/* Display toggles — only those the active renderer supports */}
+      {hasToggles && (
+        <div className="flex items-center gap-1 pr-3 border-r border-edge">
+          {is2D && (
+            <ToggleButton active={s.showGrid} onClick={() => s.toggle("showGrid")} title="Grid">
+              <Grid3x3 size={14} />
+            </ToggleButton>
+          )}
+          {showMeasurements && (
+            <ToggleButton active={s.showMeasurements} onClick={() => s.toggle("showMeasurements")} title="Measurements">
+              <Ruler size={14} />
+            </ToggleButton>
+          )}
+          {is3D && (
+            <ToggleButton active={s.wireframe} onClick={() => s.toggle("wireframe")} title="Wireframe">
+              <SquareDashed size={14} />
+            </ToggleButton>
+          )}
+          {is3D && (
+            <ToggleButton active={s.xray} onClick={() => s.toggle("xray")} title="X-ray">
+              <Eye size={14} />
+            </ToggleButton>
+          )}
+        </div>
+      )}
 
-      {/* Export */}
-      <div className="flex items-center gap-0.5 ml-2">
-        <span className="text-zinc-500 mr-1"><Download size={14} /></span>
+      {/* Export — always available */}
+      <div className="flex items-center gap-0.5">
+        <span className="text-zinc-500 mr-1" title="Export">
+          <Download size={14} />
+        </span>
         {(["json", "svg", "glb"] as const).map((k) => (
           <button
             key={k}
