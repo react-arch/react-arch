@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
-import { allFloors, type BuildingDocument } from "@react-arch/core";
+import { allFloors, furnitureColor, furnitureDims, type BuildingDocument } from "@react-arch/core";
 import { bounds, wallBoxes, wallDirection } from "@react-arch/geometry";
 
 export interface GltfExportOptions {
@@ -18,11 +18,10 @@ export function buildExportScene(
 
   const matFor = (color: string, opts: Partial<THREE.MeshStandardMaterialParameters> = {}) =>
     new THREE.MeshStandardMaterial({ color: new THREE.Color(color), roughness: 0.9, ...opts });
+  const colorFor = (materialId: string | undefined, fallback: string) =>
+    materialId ? doc.materials.find((m) => m.id === materialId)?.baseColor ?? fallback : fallback;
 
-  const wallMat = matFor("#e8e6e1");
   const slabMat = matFor("#9b9b97");
-  const doorMat = matFor("#6b4b2f", { roughness: 0.6 });
-  const glassMat = matFor("#bcd6e6", { transparent: true, opacity: 0.4, roughness: 0.05 });
 
   for (const floor of allFloors(doc)) {
     const visible = floorIds === "all" ? floor.visible : floorIds.includes(floor.id);
@@ -49,7 +48,7 @@ export function buildExportScene(
         const px = wall.start[0] + dir[0] * along;
         const py = wall.start[1] + dir[1] * along;
         const geo = new THREE.BoxGeometry(Math.max(s.along1 - s.along0, 0.001), Math.max(s.z1 - s.z0, 0.001), wall.thickness);
-        const mesh = new THREE.Mesh(geo, wallMat);
+        const mesh = new THREE.Mesh(geo, matFor(colorFor(wall.materialId, "#e8e6e1")));
         mesh.position.set(px, el + (s.z0 + s.z1) / 2, py);
         mesh.rotation.y = -theta;
         floorGroup.add(mesh);
@@ -58,6 +57,7 @@ export function buildExportScene(
 
     const wallById = new Map(floor.walls.map((w) => [w.id, w]));
     for (const o of floor.openings) {
+      if (o.type === "opening") continue;
       const wall = wallById.get(o.wallId);
       if (!wall) continue;
       const dir = wallDirection(wall);
@@ -66,9 +66,24 @@ export function buildExportScene(
       const py = wall.start[1] + dir[1] * o.offset;
       const depth = o.type === "window" ? 0.05 : wall.thickness * 0.6;
       const geo = new THREE.BoxGeometry(Math.max(o.width - 0.04, 0.05), Math.max(o.height - 0.04, 0.05), depth);
-      const mesh = new THREE.Mesh(geo, o.type === "window" ? glassMat : doorMat);
+      const mesh = new THREE.Mesh(
+        geo,
+        o.type === "window"
+          ? matFor(colorFor(o.materialId, "#bcd6e6"), { transparent: true, opacity: 0.4, roughness: 0.05 })
+          : matFor(colorFor(o.materialId, "#6b4b2f"), { roughness: 0.6 }),
+      );
       mesh.position.set(px, el + o.sillHeight + o.height / 2, py);
       mesh.rotation.y = -theta;
+      floorGroup.add(mesh);
+    }
+
+    for (const ob of floor.objects) {
+      const d = furnitureDims(ob.type, ob.scale);
+      const geo = new THREE.BoxGeometry(d.width, d.height, d.depth);
+      const mesh = new THREE.Mesh(geo, matFor(furnitureColor(ob.type), { roughness: 0.7 }));
+      mesh.name = ob.id;
+      mesh.position.set(ob.position[0], el + ob.position[2] + d.height / 2, ob.position[1]);
+      mesh.rotation.y = -ob.rotation[2];
       floorGroup.add(mesh);
     }
 

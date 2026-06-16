@@ -1,0 +1,82 @@
+---
+title: Quick start
+description: Describe a building in React and render it in 2D and 3D.
+---
+
+## 1. Describe a building
+
+Compose `Building` → `Floor` → `Room`, and attach `Door` / `Window` to room
+sides. Coordinates are metres; X increases right, Y increases down.
+
+```tsx title="House.tsx"
+import { Building, Door, Floor, Room, Window, Fixture } from "@react-arch/react";
+
+export function House() {
+  return (
+    <Building name="My House" units="metric">
+      <Floor id="ground" name="Ground Floor" elevation={0} height={2.8}>
+        <Room id="living" name="Living Room" x={0} y={0} width={5} depth={4}>
+          <Door wall="south" offset={1} width={0.9} height={2.1} />
+          <Window wall="west" offset={2} width={2.2} height={1.4} />
+          <Fixture type="sofa" x={2.5} y={3} />
+        </Room>
+        <Room id="kitchen" name="Kitchen" x={5} y={0} width={4} depth={4}>
+          <Window wall="north" offset={2} width={1.6} />
+          <Door wall="west" offset={2} width={0.9} />
+        </Room>
+      </Floor>
+    </Building>
+  );
+}
+```
+
+## 2. Derive the model
+
+`renderToDocument` runs your component tree through the React Arch reconciler
+and returns a `BuildingDocument`.
+
+```tsx
+import { renderToDocument } from "@react-arch/react";
+
+const doc = renderToDocument(<House />);
+```
+
+## 3. Render it
+
+The renderers are plain React components that read the model.
+
+```tsx title="App.tsx"
+import { useState } from "react";
+import { renderToDocument } from "@react-arch/react";
+import { Plan2D } from "@react-arch/renderer-2d";
+import { Building3D } from "@react-arch/renderer-3d";
+import { House } from "./House";
+
+export function App() {
+  const [view, setView] = useState<"2d" | "3d">("2d");
+  const doc = renderToDocument(<House />);
+  return (
+    <div style={{ position: "fixed", inset: 0 }}>
+      <button onClick={() => setView(view === "2d" ? "3d" : "2d")}>
+        Toggle view
+      </button>
+      {view === "2d" ? (
+        <Plan2D document={doc} floorIds="all" />
+      ) : (
+        <Building3D document={doc} floorIds="all" />
+      )}
+    </div>
+  );
+}
+```
+
+Because the building is just React, you can reuse components and generate
+geometry with loops:
+
+```tsx
+{floors.map((level) => (
+  <Floor key={level} id={`l${level}`} elevation={level * 3} height={2.9}>
+    {units.map((u) => <ApartmentModule key={u.id} {...u} />)}
+  </Floor>
+))}
+```

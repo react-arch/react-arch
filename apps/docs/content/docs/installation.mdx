@@ -1,0 +1,44 @@
+---
+title: Installation
+description: Add React Arch to a project, or scaffold a new one.
+---
+
+## Scaffold a new project
+
+The fastest way to start is the project generator, which creates a small Vite
+app that renders your building with a live 2D / 3D viewer:
+
+```bash
+npm create react-arch-app my-building
+cd my-building
+npm install
+npm run dev
+```
+
+Edit `src/House.tsx` and the preview updates live.
+
+## Add to an existing project
+
+Install the packages you need. At minimum you want the components and the
+renderers:
+
+```bash
+npm install @react-arch/react @react-arch/renderer-2d @react-arch/renderer-3d
+# peer deps for the 3D renderer
+npm install three @react-three/fiber @react-three/drei
+```
+
+| Package | Responsibility |
+| --- | --- |
+| `@react-arch/react` | Declarative components + the reconciler that builds the model |
+| `@react-arch/core` | The canonical `BuildingDocument`, commands, serialization |
+| `@react-arch/geometry` | Pure geometry: wall polygons, areas, snapping, opening cuts |
+| `@react-arch/renderer-2d` | Canvas 2D floor-plan renderer |
+| `@react-arch/renderer-3d` | React Three Fiber 3D renderer |
+| `@react-arch/exporters` | JSON, SVG, and GLTF/GLB export |
+| `@react-arch/validation` | Zod schemas + semantic diagnostics |
+
+## Requirements
+
+- React 18 or 19
+- For 3D: `three`, `@react-three/fiber`, `@react-three/drei`

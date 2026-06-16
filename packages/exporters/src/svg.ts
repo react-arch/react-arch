@@ -1,4 +1,4 @@
-import { allFloors, type BuildingDocument } from "@react-arch/core";
+import { allFloors, furnitureDims, type BuildingDocument } from "@react-arch/core";
 import {
   bounds,
   openingSpan,
@@ -30,7 +30,25 @@ export function exportSVG(doc: BuildingDocument, options: SvgExportOptions = {})
   );
 
   const pts: Vec2[] = [];
-  for (const f of floors) for (const w of f.walls) pts.push(...wallPolygon(w));
+  for (const f of floors) {
+    const wallById = new Map(f.walls.map((w) => [w.id, w]));
+    for (const w of f.walls) pts.push(...wallPolygon(w));
+    for (const r of f.rooms) pts.push(...r.polygon);
+    for (const o of f.openings) {
+      const wall = wallById.get(o.wallId);
+      if (wall) {
+        const span = openingSpan(wall, o);
+        pts.push(span.start, span.end);
+      }
+    }
+    for (const ob of f.objects) {
+      const d = furnitureDims(ob.type, ob.scale);
+      pts.push(
+        [ob.position[0] - d.width / 2, ob.position[1] - d.depth / 2],
+        [ob.position[0] + d.width / 2, ob.position[1] + d.depth / 2],
+      );
+    }
+  }
   const b = bounds(pts.length ? pts : [[0, 0], [1, 1]]);
   const vx = b.min[0] - pad;
   const vy = b.min[1] - pad;

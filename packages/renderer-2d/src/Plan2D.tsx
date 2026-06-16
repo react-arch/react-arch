@@ -86,9 +86,11 @@ export function Plan2D(props: Plan2DProps) {
     }
     const b = bounds(pts);
     const margin = 60;
+    const availableW = Math.max(size.w - margin * 2, 1);
+    const availableH = Math.max(size.h - margin * 2, 1);
     const scale = Math.min(
-      (size.w - margin * 2) / Math.max(b.width, 0.5),
-      (size.h - margin * 2) / Math.max(b.height, 0.5),
+      availableW / Math.max(b.width, 0.5),
+      availableH / Math.max(b.height, 0.5),
     );
     const cx = (b.min[0] + b.max[0]) / 2;
     const cy = (b.min[1] + b.max[1]) / 2;

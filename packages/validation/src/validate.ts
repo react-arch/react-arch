@@ -9,7 +9,7 @@ import { BuildingDocumentSchema } from "./schema.js";
  * for shape, then semantic checks (unique ids, references, fit). The studio
  * shows these in the diagnostics panel; clicking one selects the entity.
  */
-export function validateDocument(doc: BuildingDocument): Diagnostic[] {
+export function validateDocument(doc: unknown): Diagnostic[] {
   const diags: Diagnostic[] = [];
 
   const parsed = BuildingDocumentSchema.safeParse(doc);
@@ -22,13 +22,16 @@ export function validateDocument(doc: BuildingDocument): Diagnostic[] {
         path: issue.path.map(String),
       });
     }
+    return diags;
   }
 
-  if (!isCompatibleVersion(doc.version)) {
+  const checked = parsed.data as BuildingDocument;
+
+  if (!isCompatibleVersion(checked.version)) {
     diags.push({
       severity: "warning",
       code: "version",
-      message: `Document version ${doc.version} may be incompatible with this build`,
+      message: `Document version ${checked.version} may be incompatible with this build`,
     });
   }
 
@@ -47,8 +50,16 @@ export function validateDocument(doc: BuildingDocument): Diagnostic[] {
     }
   };
 
-  const floors = allFloors(doc);
-  const floorIds = new Set(floors.map((f) => f.id));
+  checkId(checked.id, "document");
+  for (const building of checked.buildings) checkId(building.id, "building");
+  for (const material of checked.materials) checkId(material.id, "material");
+  for (const asset of checked.assets) {
+    if (typeof asset === "object" && asset && "id" in asset && typeof asset.id === "string") {
+      checkId(asset.id, "asset");
+    }
+  }
+
+  const floors = allFloors(checked);
   for (const floor of floors) {
     checkId(floor.id, "floor");
     const wallIds = new Set(floor.walls.map((w) => w.id));
@@ -63,12 +74,23 @@ export function validateDocument(doc: BuildingDocument): Diagnostic[] {
     }
     for (const room of floor.rooms) {
       checkId(room.id, "room");
+      if (room.floorId !== floor.id) {
+        diags.push({ severity: "error", code: "bad-floor-ref", message: `Room ${room.id} references wrong floor`, entityId: room.id });
+      }
       if (room.polygon.length < 3) {
         diags.push({ severity: "error", code: "open-room", message: `Room ${room.id} boundary is not closed`, entityId: room.id });
+      }
+      for (const wallId of room.boundaryWallIds ?? []) {
+        if (!wallIds.has(wallId)) {
+          diags.push({ severity: "error", code: "bad-wall-ref", message: `Room ${room.id} references unknown boundary wall ${wallId}`, entityId: room.id });
+        }
       }
     }
     for (const o of floor.openings) {
       checkId(o.id, "opening");
+      if (o.floorId !== floor.id) {
+        diags.push({ severity: "error", code: "bad-floor-ref", message: `Opening ${o.id} references wrong floor`, entityId: o.id });
+      }
       if (!wallIds.has(o.wallId)) {
         diags.push({ severity: "error", code: "bad-wall-ref", message: `Opening ${o.id} references unknown wall ${o.wallId}`, entityId: o.id });
         continue;
@@ -78,18 +100,22 @@ export function validateDocument(doc: BuildingDocument): Diagnostic[] {
         diags.push({ severity: "warning", code: "opening-overflow", message: `Opening ${o.id} does not fit within its wall`, entityId: o.id });
       }
     }
-    for (const obj of floor.objects) checkId(obj.id, "object");
+    for (const obj of floor.objects) {
+      checkId(obj.id, "object");
+      if (obj.floorId !== floor.id) {
+        diags.push({ severity: "error", code: "bad-floor-ref", message: `Object ${obj.id} references wrong floor`, entityId: obj.id });
+      }
+    }
   }
 
   // Building → floor references.
-  for (const building of doc.buildings) {
+  for (const building of checked.buildings) {
     for (const f of building.floors) {
       if (f.buildingId !== building.id) {
         diags.push({ severity: "error", code: "bad-building-ref", message: `Floor ${f.id} references wrong building`, entityId: f.id });
       }
     }
   }
-  void floorIds;
 
   return diags;
 }

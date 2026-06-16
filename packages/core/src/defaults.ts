@@ -34,7 +34,7 @@ export function createEmptyDocument(
         floors: [],
       },
     ],
-    materials: [...DEFAULT_MATERIALS],
+    materials: DEFAULT_MATERIALS.map((m) => ({ ...m })),
     assets: [],
     metadata: {},
   };

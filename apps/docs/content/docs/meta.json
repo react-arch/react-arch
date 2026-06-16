@@ -1,0 +1,13 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "installation",
+    "quick-start",
+    "core-concepts",
+    "components",
+    "renderers",
+    "exporting",
+    "cli"
+  ]
+}

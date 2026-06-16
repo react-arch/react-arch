@@ -94,6 +94,7 @@ from that model. See [docs/adr](./docs/adr) for the decisions behind this.
 | `react-arch` | CLI — `react-arch studio` launches the Studio for a project |
 | `create-react-arch-app` | Scaffolder — `npm create react-arch-app` |
 | `apps/studio` | React Arch Studio — the visualizer (driven by the CLI) |
+| `apps/docs` | Documentation site (Fumadocs + Next.js) — `pnpm --filter @react-arch/docs dev` |
 | `examples/buildings` | Sample buildings + reusable modules, registered Remotion-style |
 
 ## Studio features

@@ -1,0 +1,55 @@
+---
+title: Renderers
+description: Draw the model in 2D and 3D.
+---
+
+Both renderers are React components that take a `document` (a `BuildingDocument`)
+and a `floorIds` prop — either `"all"` or an array of floor ids. They read the
+model and never mutate it.
+
+## 2D — `@react-arch/renderer-2d`
+
+A single `<canvas>` draws every wall, room, opening, and fixture (no DOM node per
+object), so large plans stay fast. It supports pan, zoom, grid, room labels with
+areas, door swing arcs, selection, and hover.
+
+```tsx
+import { Plan2D } from "@react-arch/renderer-2d";
+
+<Plan2D
+  document={doc}
+  floorIds="all"
+  selected={selection}
+  onSelect={setSelection}
+  showGrid
+  showMeasurements
+/>;
+```
+
+Ghost other floors by passing `ghostFloorIds`. Hit-testing is available
+standalone via `buildPlanScene` and `hitTest`.
+
+## 3D — `@react-arch/renderer-3d`
+
+A React Three Fiber scene generated from the model: wall meshes with real
+door/window openings, floor slabs, and placeholder furniture. Orbit controls,
+shadows, selection, plus `wireframe`, `xray`, and `exploded` modes.
+
+```tsx
+import { Building3D } from "@react-arch/renderer-3d";
+
+<Building3D
+  document={doc}
+  floorIds="all"
+  exploded={false}
+  wireframe={false}
+  xray={false}
+  selected={selection}
+  onSelect={setSelection}
+/>;
+```
+
+Requires the peer deps `three`, `@react-three/fiber`, and `@react-three/drei`.
+Geometry is regenerated from the model each render — no Three.js mesh is ever
+stored as data. The pure `build3DScene` helper exposes the mesh inputs if you
+want to build your own scene.

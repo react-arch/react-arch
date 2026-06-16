@@ -35,6 +35,10 @@ function requireFloor(doc: BuildingDocument, floorId: string): Floor {
   return found.floor;
 }
 
+function cloneVec2(v: Vec2): Vec2 {
+  return [v[0], v[1]];
+}
+
 // --- Walls -----------------------------------------------------------------
 
 export interface CreateWallInput {
@@ -56,8 +60,8 @@ export function createWall(
     const wall: Wall = {
       id: input.id ?? createId("wall"),
       floorId: input.floorId,
-      start: input.start,
-      end: input.end,
+      start: cloneVec2(input.start),
+      end: cloneVec2(input.end),
       thickness: input.thickness ?? 0.2,
       height: input.height ?? floor.height,
       materialId: input.materialId,
@@ -76,7 +80,7 @@ export function updateWall(
     for (const floor of allFloorsOf(draft)) {
       const wall = floor.walls.find((w) => w.id === wallId);
       if (!wall) continue;
-      Object.assign(wall, patch);
+      Object.assign(wall, deepClone(patch));
       reattachOpenings(floor, wall, warnings);
       return [{ kind: "update", entity: "wall", id: wallId }];
     }
@@ -103,6 +107,11 @@ export function deleteWall(doc: BuildingDocument, wallId: string): CommandResult
       if (idx === -1) continue;
       floor.walls.splice(idx, 1);
       changes.push({ kind: "delete", entity: "wall", id: wallId });
+      for (const room of floor.rooms) {
+        if (!room.boundaryWallIds?.includes(wallId)) continue;
+        room.boundaryWallIds = room.boundaryWallIds.filter((id) => id !== wallId);
+        changes.push({ kind: "update", entity: "room", id: room.id });
+      }
       // Cascade: drop openings attached to the wall.
       floor.openings = floor.openings.filter((o) => {
         if (o.wallId === wallId) {
@@ -150,13 +159,13 @@ export function createRoom(
 ): CommandResult {
   return mutate(doc, (draft) => {
     const floor = requireFloor(draft, input.floorId);
-    const room: Room = {
-      id: input.id ?? createId("room"),
-      floorId: input.floorId,
-      name: input.name,
-      polygon: input.polygon,
-      floorMaterialId: input.floorMaterialId,
-      ceilingMaterialId: input.ceilingMaterialId,
+      const room: Room = {
+        id: input.id ?? createId("room"),
+        floorId: input.floorId,
+        name: input.name,
+        polygon: input.polygon.map(cloneVec2),
+        floorMaterialId: input.floorMaterialId,
+        ceilingMaterialId: input.ceilingMaterialId,
       usageType: input.usageType,
     };
     floor.rooms.push(room);
@@ -173,7 +182,7 @@ export function updateRoom(
     for (const floor of allFloorsOf(draft)) {
       const room = floor.rooms.find((r) => r.id === roomId);
       if (!room) continue;
-      Object.assign(room, patch);
+      Object.assign(room, deepClone(patch));
       return [{ kind: "update", entity: "room", id: roomId }];
     }
     warnings.push({ code: "room-missing", message: `Room ${roomId} not found` });
@@ -355,6 +364,9 @@ export function duplicateFloor(
       copy.rooms.forEach((r) => {
         r.id = createId("room");
         r.floorId = copy.id;
+        if (r.boundaryWallIds) {
+          r.boundaryWallIds = r.boundaryWallIds.map((id) => idMap.get(id) ?? id);
+        }
       });
       copy.objects.forEach((ob) => {
         ob.id = createId("object");

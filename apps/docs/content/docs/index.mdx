@@ -1,0 +1,51 @@
+---
+title: Introduction
+description: A declarative TypeScript platform for creating, editing, rendering, and exporting semantic building models.
+---
+
+**React Arch** lets you describe buildings the way you describe UI — with React
+components. The same declarative tree becomes an editable 2D floor plan, a
+generated 3D model, and lossless exports, all derived from one semantic model.
+
+```tsx
+import { Building, Floor, Room, Door, Window } from "@react-arch/react";
+
+export function House() {
+  return (
+    <Building name="Modern House" units="metric">
+      <Floor id="ground" name="Ground Floor" elevation={0} height={2.8}>
+        <Room id="living" name="Living Room" x={0} y={0} width={5} depth={4}>
+          <Door wall="south" offset={1} width={0.9} height={2.1} />
+          <Window wall="west" offset={2} width={2.2} height={1.4} />
+        </Room>
+      </Floor>
+    </Building>
+  );
+}
+```
+
+## Why React Arch
+
+- **Code is the source of truth.** Buildings are React components — compose,
+  loop, and reuse them like any other code. Edit in your editor; views update.
+- **One semantic model.** A framework-agnostic `BuildingDocument` is the single
+  source of truth. Every renderer and exporter is a pure function of it.
+- **Renderer-independent.** The model never leaks Three.js or canvas concepts,
+  so 2D, 3D, JSON, SVG, and GLTF stay perfectly consistent.
+
+## The pipeline
+
+```text
+Declarative React input
+        ↓   @react-arch/react (a real react-reconciler)
+Semantic building model            ← the single source of truth
+        ↓   @react-arch/core + @react-arch/geometry
+2D renderer  /  3D renderer  /  exporters
+```
+
+<Cards>
+  <Card title="Installation" href="/docs/installation" />
+  <Card title="Quick start" href="/docs/quick-start" />
+  <Card title="Core concepts" href="/docs/core-concepts" />
+  <Card title="Components" href="/docs/components" />
+</Cards>

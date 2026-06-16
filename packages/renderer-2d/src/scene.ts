@@ -129,13 +129,17 @@ export function hitTest(
 ): EntityRef | null {
   // Openings first (smallest), then furniture, then walls, then rooms.
   for (const o of scene.openings) {
-    if (distance(point, o.center) <= Math.max(tolerance, o.width / 2)) {
+    if (projectPointOnSegment(point, o.p0, o.p1).distance <= tolerance) {
       return { kind: "opening", id: o.id };
     }
   }
   for (const ob of scene.objects) {
-    const dx = Math.abs(point[0] - ob.center[0]);
-    const dy = Math.abs(point[1] - ob.center[1]);
+    const dx0 = point[0] - ob.center[0];
+    const dy0 = point[1] - ob.center[1];
+    const c = Math.cos(-ob.rotation);
+    const s = Math.sin(-ob.rotation);
+    const dx = Math.abs(dx0 * c - dy0 * s);
+    const dy = Math.abs(dx0 * s + dy0 * c);
     if (dx <= ob.size[0] / 2 + tolerance && dy <= ob.size[1] / 2 + tolerance) {
       return { kind: "object", id: ob.id };
     }

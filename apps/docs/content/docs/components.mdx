@@ -1,0 +1,90 @@
+---
+title: Components
+description: The declarative building components from @react-arch/react.
+---
+
+All components are imported from `@react-arch/react`. Coordinates are in metres;
+**X increases right, Y increases down**.
+
+## Building
+
+The root. `units` is `"metric"` or `"imperial"`.
+
+```tsx
+<Building name="Modern House" units="metric">{/* floors */}</Building>
+```
+
+## Floor
+
+A storey. `elevation` is its base height; `height` is the floor-to-ceiling
+height that walls inherit.
+
+```tsx
+<Floor id="ground" name="Ground Floor" elevation={0} height={2.8}>{/* rooms */}</Floor>
+```
+
+## Room
+
+A rectangular room from a top-left corner (`x`, `y`) and size (`width`,
+`depth`). It generates its four perimeter walls automatically; coincident walls
+shared with an adjacent room are merged so interior doors pass through.
+
+```tsx
+<Room id="living" name="Living Room" x={0} y={0} width={5} depth={4} />
+```
+
+| Prop | Default | Notes |
+| --- | --- | --- |
+| `wallThickness` | `0.2` | metres |
+| `floorMaterial` / `ceilingMaterial` | — | material id |
+| `usage` | — | e.g. `"kitchen"` |
+
+## Door, Window, Opening
+
+Attach to a side of the parent room — `north`, `south`, `east`, or `west` — at
+an `offset` measured along that wall from its start corner.
+
+```tsx
+<Door wall="south" offset={1} width={0.9} height={2.1} />
+<Window wall="west" offset={2} width={2.2} height={1.4} />
+```
+
+Defaults: door `0.9 × 2.1`, window `1.2 × 1.4` with a `0.9` sill.
+
+## Wall
+
+A wall placed directly on a floor by its centerline endpoints.
+
+```tsx
+<Wall from={[0, 0]} to={[5, 0]} thickness={0.2} />
+```
+
+## Furniture / Fixture
+
+Placeholder building objects. `Fixture` is an alias of `Furniture`. Known types
+include `bed`, `sofa`, `table`, `chair`, `sink`, `toilet`, `shower`,
+`kitchen counter`, `wardrobe`.
+
+```tsx
+<Fixture type="sofa" x={2.5} y={3} />
+```
+
+## Reusable modules
+
+Because buildings are React, you can build your own components:
+
+```tsx
+function StandardBathroom({ id, x, y }: { id: string; x: number; y: number }) {
+  return (
+    <Room id={id} name="Bathroom" x={x} y={y} width={2.4} depth={2.2} usage="wet">
+      <Door wall="south" width={0.8} />
+      <Fixture type="toilet" x={x + 0.5} y={y + 1.6} />
+      <Fixture type="sink" x={x + 1.7} y={y + 1.7} />
+      <Fixture type="shower" x={x + 0.6} y={y + 0.5} />
+    </Room>
+  );
+}
+```
+
+Other primitives: `Group` (transparent wrapper), `Material`, and the reserved
+`Slab` / `Roof` / `Stairs`.

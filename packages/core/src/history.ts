@@ -1,4 +1,4 @@
-import { createId } from "@react-arch/shared";
+import { createId, deepClone } from "@react-arch/shared";
 import type { BuildingDocument } from "./model.js";
 
 export interface HistoryEntry {
@@ -20,7 +20,7 @@ export class History {
   constructor(private limit = 200) {}
 
   push(label: string, before: BuildingDocument, after: BuildingDocument): void {
-    this.past.push({ id: createId("hist"), label, before, after });
+    this.past.push({ id: createId("hist"), label, before: deepClone(before), after: deepClone(after) });
     if (this.past.length > this.limit) this.past.shift();
     this.future = [];
   }
@@ -37,14 +37,14 @@ export class History {
     const entry = this.past.pop();
     if (!entry) return null;
     this.future.push(entry);
-    return entry.before;
+    return deepClone(entry.before);
   }
 
   redo(): BuildingDocument | null {
     const entry = this.future.pop();
     if (!entry) return null;
     this.past.push(entry);
-    return entry.after;
+    return deepClone(entry.after);
   }
 
   get undoLabel(): string | null {

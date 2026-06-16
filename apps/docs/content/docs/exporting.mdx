@@ -1,0 +1,61 @@
+---
+title: Exporting
+description: Export the model to JSON, SVG, and GLTF/GLB.
+---
+
+`@react-arch/exporters` turns a `BuildingDocument` into other formats. JSON is
+the canonical, lossless format.
+
+```tsx
+import { exportJSON, exportSVG, exportGLTF } from "@react-arch/exporters";
+```
+
+## JSON
+
+Lossless round-trippable serialization of the whole document.
+
+```tsx
+const json = exportJSON(doc); // string
+```
+
+Re-import with `@react-arch/importers`:
+
+```tsx
+import { jsonImporter } from "@react-arch/importers";
+
+const { document, diagnostics } = await jsonImporter.import(json);
+```
+
+## SVG
+
+A scale-preserving 2D floor plan (1 unit = 1 metre) with walls, openings, room
+labels, and areas.
+
+```tsx
+const svg = exportSVG(doc, { floorIds: "all", showLabels: true });
+```
+
+## GLTF / GLB
+
+3D geometry mirroring the renderer — walls, openings, slabs, doors, and windows.
+Returns a binary `ArrayBuffer` (GLB) or a GLTF JSON object.
+
+```tsx
+const glb = await exportGLTF(doc, { binary: true });
+```
+
+Triggering a download in the browser:
+
+```tsx
+function download(name: string, data: BlobPart, mime: string) {
+  const url = URL.createObjectURL(new Blob([data], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+}
+
+download("house.glb", await exportGLTF(doc, { binary: true }), "model/gltf-binary");
+```
+
+GLTF export uses Three.js's `GLTFExporter` and runs in the browser.

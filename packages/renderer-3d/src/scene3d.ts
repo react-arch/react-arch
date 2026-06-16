@@ -1,6 +1,6 @@
 import type { BuildingDocument } from "@react-arch/core";
 import { allFloors, furnitureDims } from "@react-arch/core";
-import { bounds, wallBoxes, wallDirection, wallLength, type Vec2 } from "@react-arch/geometry";
+import { bounds, wallBoxes, wallDirection, type Vec2 } from "@react-arch/geometry";
 
 /**
  * Plan→world mapping: plan X → world X, plan Y → world Z, height → world Y.
@@ -80,6 +80,10 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
   let minY = Infinity;
   let maxY = -Infinity;
 
+  const addPlanRect = (cx: number, cz: number, width: number, depth: number) => {
+    allPts.push([cx - width / 2, cz - depth / 2], [cx + width / 2, cz + depth / 2]);
+  };
+
   ordered.forEach((floor, index) => {
     const visible = opts.floorIds === "all" ? floor.visible : opts.floorIds.includes(floor.id);
     if (!visible) return;
@@ -111,6 +115,10 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
         const along = (s.along0 + s.along1) / 2;
         const px = wall.start[0] + dir[0] * along;
         const py = wall.start[1] + dir[1] * along;
+        const size: [number, number, number] = [Math.max(s.along1 - s.along0, 0.001), Math.max(s.z1 - s.z0, 0.001), wall.thickness];
+        addPlanRect(px, py, size[0], size[2]);
+        minY = Math.min(minY, elevation + s.z0);
+        maxY = Math.max(maxY, elevation + s.z1);
         boxes.push({
           key: `${wall.id}-${i}`,
           entityId: wall.id,
@@ -118,13 +126,14 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
           kind: "wall",
           position: [px, elevation + (s.z0 + s.z1) / 2, py],
           rotationY: -theta,
-          size: [Math.max(s.along1 - s.along0, 0.001), Math.max(s.z1 - s.z0, 0.001), wall.thickness],
+          size,
           materialId: wall.materialId,
         });
       });
     }
 
     for (const o of floor.openings) {
+      if (o.type === "opening") continue;
       const wall = wallById.get(o.wallId);
       if (!wall) continue;
       const dir = wallDirection(wall);
@@ -132,6 +141,10 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
       const px = wall.start[0] + dir[0] * o.offset;
       const py = wall.start[1] + dir[1] * o.offset;
       const depth = o.type === "window" ? 0.05 : wall.thickness * 0.6;
+      const size: [number, number, number] = [Math.max(o.width - 0.04, 0.05), Math.max(o.height - 0.04, 0.05), depth];
+      addPlanRect(px, py, size[0], size[2]);
+      minY = Math.min(minY, elevation + o.sillHeight);
+      maxY = Math.max(maxY, elevation + o.sillHeight + o.height);
       panels.push({
         key: o.id,
         entityId: o.id,
@@ -139,12 +152,15 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
         kind: o.type,
         position: [px, elevation + o.sillHeight + o.height / 2, py],
         rotationY: -theta,
-        size: [Math.max(o.width - 0.04, 0.05), Math.max(o.height - 0.04, 0.05), depth],
+        size,
       });
     }
 
     for (const ob of floor.objects) {
       const d = furnitureDims(ob.type, ob.scale);
+      addPlanRect(ob.position[0], ob.position[1], d.width, d.depth);
+      minY = Math.min(minY, elevation + ob.position[2]);
+      maxY = Math.max(maxY, elevation + ob.position[2] + d.height);
       objects.push({
         key: ob.id,
         entityId: ob.id,

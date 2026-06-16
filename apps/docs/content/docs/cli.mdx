@@ -1,0 +1,47 @@
+---
+title: CLI & Studio
+description: Scaffold projects and visualize buildings.
+---
+
+## create-react-arch-app
+
+Scaffold a new project — a small Vite app that renders your building with a live
+2D / 3D viewer, using the published packages:
+
+```bash
+npm create react-arch-app my-building
+cd my-building
+npm install
+npm run dev
+```
+
+It generates:
+
+- `src/House.tsx` — your building
+- `src/App.tsx` — derives the model with `renderToDocument` and draws it with the
+  2D / 3D renderers (with a view toggle)
+
+Edit `House.tsx` and the preview updates live.
+
+## React Arch Studio
+
+The full **Studio** is a richer visualizer — building tree, properties
+inspector, floor navigation (isolated / ghost / exploded), synchronized
+selection, a diagnostics panel, and JSON/SVG/GLB export. It is Remotion-style:
+your code is the source of truth, and the Studio renders the building you
+register and re-renders on hot reload.
+
+```tsx title="Root.tsx"
+import { Composition } from "@react-arch/react";
+import { House } from "./House";
+
+export default function Root() {
+  return <Composition id="house" name="My House" component={House} />;
+}
+```
+
+<Callout>
+The Studio runs in the React Arch repository today (`pnpm dev`). Publishing it as
+a standalone CLI is on the roadmap — it ships a live bundler, so it needs more
+packaging than the libraries.
+</Callout>

@@ -5,6 +5,7 @@ export interface WallLike {
   start: Vec2;
   end: Vec2;
   thickness: number;
+  height?: number;
 }
 
 export function wallLength(wall: WallLike): number {
@@ -45,6 +46,8 @@ export function pointAlongWall(wall: WallLike, offset: number): Vec2 {
 export interface OpeningLike {
   offset: number;
   width: number;
+  height?: number;
+  sillHeight?: number;
 }
 
 /**
@@ -68,10 +71,15 @@ export function openingSpan(
 /** Whether an opening fits entirely within the wall it is attached to. */
 export function openingFits(wall: WallLike, opening: OpeningLike): boolean {
   const len = wallLength(wall);
-  return (
+  const fitsAlongWall =
+    opening.width > 0 &&
     opening.offset - opening.width / 2 >= -1e-6 &&
-    opening.offset + opening.width / 2 <= len + 1e-6
-  );
+    opening.offset + opening.width / 2 <= len + 1e-6;
+  if (!fitsAlongWall) return false;
+
+  if (wall.height === undefined || opening.height === undefined) return true;
+  const sill = opening.sillHeight ?? 0;
+  return opening.height > 0 && sill >= -1e-6 && sill + opening.height <= wall.height + 1e-6;
 }
 
 export interface WallOpeningInput extends OpeningLike {
@@ -112,13 +120,23 @@ export function wallBoxes(
     return [{ along0: lo, along1: hi, z0: 0, z1: wallHeight }];
   }
   const sorted = [...openings]
-    .map((o) => ({
-      a0: Math.max(0, o.offset - o.width / 2),
-      a1: Math.min(len, o.offset + o.width / 2),
-      sill: Math.max(0, o.sillHeight),
-      top: Math.min(wallHeight, o.sillHeight + o.height),
-    }))
+    .map((o) => {
+      const rawA0 = o.offset - o.width / 2;
+      const rawA1 = o.offset + o.width / 2;
+      return {
+        a0: Math.max(0, rawA0),
+        a1: Math.min(len, rawA1),
+        sill: Math.max(0, Math.min(wallHeight, o.sillHeight)),
+        top: Math.max(0, Math.min(wallHeight, o.sillHeight + o.height)),
+        overlapsWall: rawA1 > 0 && rawA0 < len,
+      };
+    })
+    .filter((o) => o.overlapsWall && o.a1 > o.a0 && o.top > o.sill)
     .sort((a, b) => a.a0 - b.a0);
+
+  if (sorted.length === 0) {
+    return [{ along0: lo, along1: hi, z0: 0, z1: wallHeight }];
+  }
 
   const boxes: WallBox[] = [];
   let cursor = lo;

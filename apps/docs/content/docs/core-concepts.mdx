@@ -1,0 +1,49 @@
+---
+title: Core concepts
+description: The semantic model, geometry, and how everything stays in sync.
+---
+
+## The semantic model
+
+Everything derives from a single `BuildingDocument` (in `@react-arch/core`). It
+depends only on primitives and geometry — never on React, Three.js, or the DOM.
+
+```text
+BuildingDocument
+└── Building
+    └── Floor                  { elevation, height, visible }
+        ├── Wall[]             centerline + thickness + height
+        ├── Room[]             polygon (+ optional boundary walls)
+        ├── Opening[]          door | window | opening, attached to a wall
+        └── BuildingObject[]   furniture / fixtures
+```
+
+Walls are stored by their **centerline and thickness**; the visible polygon is
+*derived* by `@react-arch/geometry`, never stored. Openings attach to a wall
+**semantically** (an `offset` along the centerline), so they follow when a wall
+moves.
+
+## Code is the source of truth
+
+`@react-arch/react` is a real [react-reconciler](https://www.npmjs.com/package/react-reconciler)
+host renderer. Your components emit host nodes; the reconciler builds a tree;
+`convert()` turns it into a `BuildingDocument`. Because it's real React,
+composition, hooks, props, and `.map()` loops all work.
+
+Renderers and exporters are **pure functions of the model**, so the 2D plan, 3D
+model, JSON, SVG, and GLTF can never drift apart.
+
+## Geometry
+
+`@react-arch/geometry` is pure math behind stable APIs: wall polygons, corner
+joins, polygon area/centroid, snapping, and **opening cuts**. 3D openings are
+produced by decomposing each wall into the solid boxes that remain around its
+openings (`wallBoxes`) — fast and robust, no CSG.
+
+## Commands & validation
+
+`@react-arch/core` also ships immutable commands (`createWall`, `moveOpening`,
+…) that return a new document plus `changes` and `warnings`, with snapshot-based
+undo/redo. `@react-arch/validation` runs Zod schemas plus semantic checks
+(unique ids, valid references, openings that fit) and returns structured
+diagnostics.
