@@ -22,8 +22,13 @@ export interface SlabMesh {
   entityId: string;
   floorId: string;
   kind: "slab";
-  position: [number, number, number];
-  size: [number, number, number];
+  /** Outer outline in plan coords (x, y). */
+  outline: Vec2[];
+  /** Stairwell voids (plan polygons) cut out of the slab. */
+  holes: Vec2[][];
+  /** World Y of the slab top. */
+  topY: number;
+  thickness: number;
 }
 export interface PanelMesh {
   key: string;
@@ -83,6 +88,14 @@ export interface Build3DOptions {
   exploded?: boolean;
   explodeGap?: number;
   showSlabs?: boolean;
+}
+
+/** A rectangular stairwell void, enlarged by a small margin and clipped to the slab. */
+function clampRect(min: Vec2, max: Vec2, x0: number, x1: number, z0: number, z1: number): Vec2[] {
+  const m = 0.06;
+  const ax = Math.max(x0, min[0] - m), bx = Math.min(x1, max[0] + m);
+  const az = Math.max(z0, min[1] - m), bz = Math.min(z1, max[1] + m);
+  return [[ax, az], [bx, az], [bx, bz], [ax, bz]];
 }
 
 const SLAB_THICKNESS = 0.14;
@@ -227,18 +240,34 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
 
     if (opts.showSlabs !== false && floor.walls.length > 0) {
       const b = bounds(floor.walls.flatMap((w) => [w.start, w.end]));
+      // Extend to the outer wall face (~half a wall thickness), so the floor
+      // sits flush with the walls instead of overhanging as a ledge.
+      const x0 = b.min[0] - 0.1, x1 = b.max[0] + 0.1, z0 = b.min[1] - 0.1, z1 = b.max[1] + 0.1;
+      const outline: Vec2[] = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]];
+      // Cut a stairwell void where a stair on the floor below arrives here.
+      const holes: Vec2[][] = [];
+      for (const g of floors) {
+        if (g === floor || Math.abs(g.elevation + g.height - floor.elevation) > 0.3) continue;
+        for (const st of g.stairs) {
+          const fp = stairGeometry({
+            position: st.position, width: st.width, run: st.run, rise: st.rise,
+            direction: st.direction, steps: st.steps, baseY: 0,
+          }).footprint;
+          holes.push(clampRect(fp.min, fp.max, x0, x1, z0, z1));
+        }
+      }
       slabs.push({
         key: `slab-${floor.id}`,
         entityId: floor.id,
         floorId: floor.id,
         kind: "slab",
+        outline,
+        holes,
         // Sit the slab top SLAB_TOP_GAP below the floor line so it is never
         // coplanar with the tops of the walls of the floor below (which reach
         // exactly this elevation) — the root cause of the z-fighting seam.
-        position: [(b.min[0] + b.max[0]) / 2, elevation - SLAB_TOP_GAP - SLAB_THICKNESS / 2, (b.min[1] + b.max[1]) / 2],
-        // Extend to the outer wall face (~half a wall thickness), so the floor
-        // sits flush with the walls instead of overhanging as a ledge.
-        size: [b.width + 0.2, SLAB_THICKNESS, b.height + 0.2],
+        topY: elevation - SLAB_TOP_GAP,
+        thickness: SLAB_THICKNESS,
       });
     }
   });

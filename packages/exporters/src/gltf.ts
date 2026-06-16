@@ -102,9 +102,37 @@ export function buildExportScene(
 
     if (floor.walls.length > 0) {
       const b = bounds(floor.walls.flatMap((w) => [w.start, w.end]));
-      const geo = new THREE.BoxGeometry(b.width + 0.2, 0.14, b.height + 0.2);
+      const x0 = b.min[0] - 0.1, x1 = b.max[0] + 0.1, z0 = b.min[1] - 0.1, z1 = b.max[1] + 0.1;
+      const shape = new THREE.Shape();
+      shape.moveTo(x0, z0);
+      shape.lineTo(x1, z0);
+      shape.lineTo(x1, z1);
+      shape.lineTo(x0, z1);
+      shape.closePath();
+      // Cut a stairwell void where a stair on the floor below arrives here.
+      for (const g of allFloors(doc)) {
+        if (g === floor || Math.abs(g.elevation + g.height - floor.elevation) > 0.3) continue;
+        for (const st of g.stairs) {
+          const fp = stairGeometry({
+            position: st.position, width: st.width, run: st.run, rise: st.rise,
+            direction: st.direction, steps: st.steps, baseY: 0,
+          }).footprint;
+          const m = 0.06;
+          const ax = Math.max(x0, fp.min[0] - m), bx = Math.min(x1, fp.max[0] + m);
+          const az = Math.max(z0, fp.min[1] - m), bz = Math.min(z1, fp.max[1] + m);
+          const path = new THREE.Path();
+          path.moveTo(ax, az);
+          path.lineTo(bx, az);
+          path.lineTo(bx, bz);
+          path.lineTo(ax, bz);
+          path.closePath();
+          shape.holes.push(path);
+        }
+      }
+      const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.14, bevelEnabled: false });
+      geo.rotateX(Math.PI / 2);
       const slab = new THREE.Mesh(geo, slabMat);
-      slab.position.set((b.min[0] + b.max[0]) / 2, el - 0.07, (b.min[1] + b.max[1]) / 2);
+      slab.position.set(0, el, 0);
       floorGroup.add(slab);
     }
 

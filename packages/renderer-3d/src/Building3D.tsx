@@ -100,6 +100,27 @@ export function Building3D(props: Building3DProps) {
     [scene.stairs],
   );
 
+  // Pre-build floor slabs as extruded shapes (with stairwell holes).
+  const slabGeos = useMemo(
+    () =>
+      scene.slabs.map((s) => {
+        const shape = new THREE.Shape();
+        s.outline.forEach(([x, z], i) => (i ? shape.lineTo(x, z) : shape.moveTo(x, z)));
+        shape.closePath();
+        for (const hole of s.holes) {
+          const path = new THREE.Path();
+          hole.forEach(([x, z], i) => (i ? path.lineTo(x, z) : path.moveTo(x, z)));
+          path.closePath();
+          shape.holes.push(path);
+        }
+        const g = new THREE.ExtrudeGeometry(shape, { depth: s.thickness, bevelEnabled: false });
+        // Shape lives in plan (X, Y); map plan Y → world Z and extrude → world -Y.
+        g.rotateX(Math.PI / 2);
+        return g;
+      }),
+    [scene.slabs],
+  );
+
   return (
     <div className={props.className} style={{ width: "100%", height: "100%", background: "#0f1115" }}>
       <Canvas
@@ -141,15 +162,15 @@ export function Building3D(props: Building3DProps) {
           frames={1}
         />
 
-        {scene.slabs.map((s) => (
-          <mesh key={s.key} position={s.position} receiveShadow
+        {scene.slabs.map((s, i) => (
+          <mesh key={s.key} geometry={slabGeos[i]} position={[0, s.topY, 0]} receiveShadow
             onClick={(e) => { e.stopPropagation(); props.onSelect?.({ kind: "floor", id: s.floorId }); }}>
-            <boxGeometry args={s.size} />
             <meshStandardMaterial
               color={isSelected(s.floorId) ? ACCENT : PALETTE.floor}
               roughness={0.72}
               metalness={0}
               envMapIntensity={0.5}
+              side={THREE.DoubleSide}
               polygonOffset
               polygonOffsetFactor={isSelected(s.floorId) ? -4 : 1}
               polygonOffsetUnits={isSelected(s.floorId) ? -4 : 1}
