@@ -17,5 +17,10 @@
     "architecture",
     "floor-plan"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/react-arch/react-arch.git",
+    "directory": "packages/create-react-arch-app"
+  },
   "license": "MIT"
 }
