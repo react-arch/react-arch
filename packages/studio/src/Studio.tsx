@@ -9,7 +9,8 @@ import {
 import { createEmptyDocument, type BuildingDocument } from "@react-arch/core";
 import { validateDocument, type Diagnostic } from "@react-arch/validation";
 import { useStudio } from "./store.js";
-import { Toolbar } from "./components/Toolbar.js";
+import { TopBar } from "./components/TopBar.js";
+import { CanvasControls } from "./components/CanvasControls.js";
 import { Tree } from "./components/Tree.js";
 import { Properties } from "./components/Properties.js";
 import { Diagnostics } from "./components/Diagnostics.js";
@@ -98,13 +99,14 @@ export function Studio(props: StudioProps) {
         </div>
       ) : null}
 
-      <Toolbar doc={doc} compositions={compositions} />
+      <TopBar doc={doc} compositions={compositions} />
 
       <div className="flex-1 grid min-h-0" style={{ gridTemplateColumns: "240px 1fr 280px" }}>
         <aside className="border-r border-edge bg-panel min-h-0 overflow-hidden">
           <Tree doc={doc} />
         </aside>
         <main className="min-h-0 relative bg-[#0f1115]">
+          <CanvasControls doc={doc} />
           <CanvasArea doc={doc} />
         </main>
         <aside className="border-l border-edge bg-panel min-h-0 overflow-hidden">
