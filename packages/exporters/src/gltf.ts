@@ -44,7 +44,7 @@ export function buildExportScene(
       const opens = (openingsByWall.get(wall.id) ?? []).map((o) => ({
         offset: o.offset, width: o.width, height: o.height, sillHeight: o.sillHeight,
       }));
-      for (const s of wallBoxes(wall, opens, wall.height)) {
+      for (const s of wallBoxes(wall, opens, wall.height, wall.thickness / 2)) {
         const along = (s.along0 + s.along1) / 2;
         const px = wall.start[0] + dir[0] * along;
         const py = wall.start[1] + dir[1] * along;

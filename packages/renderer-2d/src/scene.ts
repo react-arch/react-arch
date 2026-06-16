@@ -83,7 +83,7 @@ export function buildPlanScene(
       scene.walls.push({
         id: w.id,
         floorId: floor.id,
-        polygon: wallPolygon(w),
+        polygon: wallPolygon(w, w.thickness / 2),
         start: w.start,
         end: w.end,
         thickness: w.thickness,
