@@ -7,10 +7,18 @@
   "bin": {
     "react-arch": "bin/react-arch.mjs"
   },
-  "files": ["bin"],
+  "files": [
+    "bin"
+  ],
   "dependencies": {
     "@react-arch/studio": "workspace:*"
   },
-  "keywords": ["react-arch", "architecture", "floor-plan", "studio", "cli"],
+  "keywords": [
+    "react-arch",
+    "architecture",
+    "floor-plan",
+    "studio",
+    "cli"
+  ],
   "license": "MIT"
 }
