@@ -147,8 +147,10 @@ Releases are automated with [Changesets](https://github.com/changesets/changeset
 1. Add a changeset describing your change: `pnpm changeset`.
 2. On merge to `main`, the **Release** workflow opens a "Version Packages" PR
    that bumps versions and updates changelogs.
-3. Merging that PR builds the libraries (`tsdown`) and publishes them to npm
-   (requires an `NPM_TOKEN` secret).
+3. Merging that PR builds the libraries (`tsdown`) and publishes them to npm via
+   `pnpm publish` using **OIDC Trusted Publishing** — no `NPM_TOKEN`. Each
+   package needs a Trusted Publisher configured on npmjs.com pointing at this
+   repo and the `Release` workflow.
 
 Packages develop from TypeScript source (`exports` → `src`) for instant HMR;
 `publishConfig` swaps `exports`/`types` to the built `dist` only at publish
