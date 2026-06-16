@@ -1,4 +1,4 @@
-import { allFloors, findFloor, findOpening, findRoom, findWall, furnitureDims, type BuildingDocument } from "@react-arch/core";
+import { allFloors, findFloor, findOpening, findRoom, findStair, findWall, furnitureDims, type BuildingDocument } from "@react-arch/core";
 import { polygonArea, wallLength } from "@react-arch/geometry";
 import { useStudio } from "../store.js";
 
@@ -17,6 +17,7 @@ export function Properties({ doc }: { doc: BuildingDocument }) {
         {selection?.kind === "opening" && <OpeningProps doc={doc} id={selection.id} />}
         {selection?.kind === "floor" && <FloorProps doc={doc} id={selection.id} />}
         {selection?.kind === "object" && <ObjectProps doc={doc} id={selection.id} />}
+        {selection?.kind === "stair" && <StairProps doc={doc} id={selection.id} />}
       </div>
     </div>
   );
@@ -118,6 +119,23 @@ function ObjectProps({ doc, id }: { doc: BuildingDocument; id: string }) {
       <Field label="Width" value={`${d.width.toFixed(2)} m`} />
       <Field label="Depth" value={`${d.depth.toFixed(2)} m`} />
       <Field label="Height" value={`${d.height.toFixed(2)} m`} />
+    </div>
+  );
+}
+
+function StairProps({ doc, id }: { doc: BuildingDocument; id: string }) {
+  const st = findStair(doc, id);
+  if (!st) return <Empty />;
+  const riser = st.rise / Math.max(st.steps, 1);
+  return (
+    <div className="text-xs">
+      <Header kind="Stairs" name={st.kind} />
+      <Field label="Position" value={`${st.position[0].toFixed(2)}, ${st.position[1].toFixed(2)}`} />
+      <Field label="Width" value={`${st.width} m`} />
+      <Field label="Run" value={`${st.run} m`} />
+      <Field label="Rise" value={`${st.rise} m`} />
+      <Field label="Steps" value={st.steps} />
+      <Field label="Riser" value={`${(riser * 100).toFixed(1)} cm`} />
     </div>
   );
 }

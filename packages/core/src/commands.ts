@@ -329,6 +329,7 @@ export function createFloor(
       rooms: [],
       openings: [],
       objects: [],
+      stairs: [],
     };
     building.floors.push(floor);
     building.floors.sort((a, b) => a.elevation - b.elevation);
@@ -371,6 +372,10 @@ export function duplicateFloor(
       copy.objects.forEach((ob) => {
         ob.id = createId("object");
         ob.floorId = copy.id;
+      });
+      copy.stairs.forEach((st) => {
+        st.id = createId("stair");
+        st.floorId = copy.id;
       });
       building.floors.push(copy);
       building.floors.sort((a, b) => a.elevation - b.elevation);

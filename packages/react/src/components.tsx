@@ -126,11 +126,31 @@ export interface RoofProps {
   overhang?: number;
   /** Slab thickness for flat roofs (default 0.3). */
   thickness?: number;
+  /** Cap a specific floor (by id) instead of the top visible floor. */
+  floorId?: string;
   materialId?: string;
 }
 export function Roof(props: RoofProps) {
   return h(TAG.roof, props);
 }
-export function Stairs(props: WithChildren<{ id?: string }>) {
+export interface StairProps {
+  id?: string;
+  /** Plan position of the bottom-start corner (metres). Alias: `at={[x, y]}`. */
+  x?: number;
+  y?: number;
+  at?: [number, number];
+  /** Width across the treads (default 1 m). */
+  width?: number;
+  /** Total plan run along the travel direction (default 3 m). */
+  run?: number;
+  /** Total rise (default = the floor's height, reaching the floor above). */
+  rise?: number;
+  /** Travel direction: a compass side or degrees (0 = +X, clockwise). */
+  direction?: "north" | "south" | "east" | "west" | number;
+  /** Number of treads (default 16). */
+  steps?: number;
+  materialId?: string;
+}
+export function Stairs(props: StairProps) {
   return h(TAG.stairs, props);
 }

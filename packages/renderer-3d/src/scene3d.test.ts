@@ -24,6 +24,7 @@ const doc: BuildingDocument = {
           rooms: [],
           openings: [{ id: "passage", floorId: "f1", wallId: "w1", type: "opening", offset: 2, width: 1, height: 2.1, sillHeight: 0 }],
           objects: [{ id: "sofa", floorId: "f1", type: "sofa", position: [8, 6, 0], rotation: [0, 0, 0], scale: [1, 1, 1] }],
+          stairs: [],
         },
       ],
     },

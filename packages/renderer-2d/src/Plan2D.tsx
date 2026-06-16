@@ -37,6 +37,7 @@ const COLORS = {
   select: "#2563eb",
   ghost: "rgba(120,130,150,0.25)",
   dim: "#6f7787",
+  stair: "#9aa3b2",
 };
 
 export function Plan2D(props: Plan2DProps) {
@@ -80,6 +81,7 @@ export function Plan2D(props: Plan2DProps) {
     const pts: Vec2[] = [];
     for (const w of scene.walls) pts.push(...w.polygon);
     for (const r of scene.rooms) pts.push(...r.polygon);
+    for (const st of scene.stairs) pts.push(...st.polygon);
     if (pts.length === 0) {
       setVp({ scale: 40, ox: size.w / 2, oy: size.h / 2 });
       return;
@@ -206,6 +208,10 @@ function draw(
     const isSel = selected?.kind === "wall" && selected.id === w.id;
     fillPolygon(ctx, w.polygon, isSel ? COLORS.select : COLORS.wall, toScreen, COLORS.wallStroke);
   }
+  // Stairs (over rooms/walls, under furniture/openings).
+  for (const st of scene.stairs) {
+    drawStair(ctx, st, toScreen, selected?.kind === "stair" && selected.id === st.id);
+  }
   // Furniture footprints (under openings/labels, over rooms).
   for (const ob of scene.objects) {
     drawFurniture(ctx, ob, vp, toScreen, selected?.kind === "object" && selected.id === ob.id);
@@ -321,6 +327,59 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
+}
+
+function drawStair(
+  ctx: CanvasRenderingContext2D,
+  st: PlanScene["stairs"][number],
+  toScreen: (p: Vec2) => Vec2,
+  selected: boolean,
+) {
+  const color = selected ? COLORS.select : COLORS.stair;
+  // Footprint outline.
+  ctx.save();
+  ctx.beginPath();
+  polyPath(ctx, st.polygon, toScreen);
+  ctx.fillStyle = color + "1f";
+  ctx.fill();
+  ctx.lineWidth = selected ? 2 : 1.25;
+  ctx.strokeStyle = color;
+  ctx.stroke();
+
+  // Tread lines across the width.
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = color;
+  for (let i = 1; i < st.steps; i++) {
+    const t = (i / st.steps) * st.run;
+    const p0: Vec2 = [st.origin[0] + st.dir[0] * t, st.origin[1] + st.dir[1] * t];
+    const p1: Vec2 = [p0[0] + st.normal[0] * st.width, p0[1] + st.normal[1] * st.width];
+    const a = toScreen(p0);
+    const b = toScreen(p1);
+    ctx.beginPath();
+    ctx.moveTo(a[0], a[1]);
+    ctx.lineTo(b[0], b[1]);
+    ctx.stroke();
+  }
+
+  // Up-arrow along the centerline of travel.
+  const mid0: Vec2 = [st.origin[0] + st.normal[0] * st.width * 0.5, st.origin[1] + st.normal[1] * st.width * 0.5];
+  const mid1: Vec2 = [mid0[0] + st.dir[0] * st.run, mid0[1] + st.dir[1] * st.run];
+  const a = toScreen(mid0);
+  const b = toScreen(mid1);
+  ctx.beginPath();
+  ctx.moveTo(a[0], a[1]);
+  ctx.lineTo(b[0], b[1]);
+  ctx.stroke();
+  // Arrowhead at the top.
+  const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+  const head = 7;
+  ctx.beginPath();
+  ctx.moveTo(b[0], b[1]);
+  ctx.lineTo(b[0] - head * Math.cos(ang - 0.4), b[1] - head * Math.sin(ang - 0.4));
+  ctx.moveTo(b[0], b[1]);
+  ctx.lineTo(b[0] - head * Math.cos(ang + 0.4), b[1] - head * Math.sin(ang + 0.4));
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawOpening(

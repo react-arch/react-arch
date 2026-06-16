@@ -40,6 +40,7 @@ function makeDoc(): BuildingDocument {
             ],
             openings: [],
             objects: [],
+            stairs: [],
           },
         ],
       },
@@ -67,6 +68,26 @@ describe("checkQuality", () => {
     const d = checkQuality(makeDoc()).find((x) => x.code === "room-too-small")!;
     expect(d.data).toMatchObject({ minM2: 7 });
     expect(d.entityId).toBe("bed");
+  });
+
+  it("flags a multi-storey building with no stairs", () => {
+    const doc = makeDoc();
+    const ground = doc.buildings[0]!.floors[0]!;
+    // Add a second storey so the building has two storeys but no stairs.
+    doc.buildings[0]!.floors.push({ ...ground, id: "f2", elevation: 2.8 });
+    expect(codes(checkQuality(doc))).toContain("missing-stairs");
+  });
+
+  it("clears missing-stairs once a stair connects the floors", () => {
+    const doc = makeDoc();
+    const ground = doc.buildings[0]!.floors[0]!;
+    doc.buildings[0]!.floors.push({ ...ground, id: "f2", elevation: 2.8, stairs: [] });
+    ground.stairs.push({
+      id: "s1", floorId: "f", kind: "straight", position: [0, 0],
+      width: 1, run: 3.5, rise: 2.8, direction: 0, steps: 16,
+    });
+    const c = codes(checkQuality(doc));
+    expect(c.has("missing-stairs")).toBe(false);
   });
 });
 

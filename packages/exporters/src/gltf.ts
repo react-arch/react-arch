@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import { allFloors, furnitureColor, furnitureDims, type BuildingDocument } from "@react-arch/core";
-import { bounds, roofGeometry, wallBoxes, wallDirection } from "@react-arch/geometry";
+import { bounds, roofGeometry, stairGeometry, wallBoxes, wallDirection } from "@react-arch/geometry";
 
 export interface GltfExportOptions {
   floorIds?: string[] | "all";
@@ -87,6 +87,20 @@ export function buildExportScene(
       floorGroup.add(mesh);
     }
 
+    for (const st of floor.stairs) {
+      const g = stairGeometry({
+        position: st.position, width: st.width, run: st.run, rise: st.rise,
+        direction: st.direction, steps: st.steps, baseY: el,
+      });
+      const mat = matFor(colorFor(st.materialId, "#b8b4ad"), { roughness: 0.8 });
+      g.steps.forEach((step, i) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(...step.size), mat);
+        mesh.name = `${st.id}-${i}`;
+        mesh.position.set(...step.position);
+        floorGroup.add(mesh);
+      });
+    }
+
     if (floor.walls.length > 0) {
       const b = bounds(floor.walls.flatMap((w) => [w.start, w.end]));
       const geo = new THREE.BoxGeometry(b.width + 0.2, 0.14, b.height + 0.2);
@@ -102,11 +116,14 @@ export function buildExportScene(
   for (const building of doc.buildings) {
     if (!building.roofs?.length) continue;
     const bFloors = building.floors.filter((f) => (floorIds === "all" ? f.visible : floorIds.includes(f.id)));
-    const wallPts = bFloors.flatMap((f) => f.walls.flatMap((w) => [w.start, w.end]));
-    if (wallPts.length === 0) continue;
-    const fb = bounds(wallPts);
-    const topY = Math.max(...bFloors.map((f) => f.elevation + f.height));
+    if (bFloors.length === 0) continue;
     for (const roof of building.roofs) {
+      const target = roof.floorId ? bFloors.filter((f) => f.id === roof.floorId) : bFloors;
+      if (target.length === 0) continue;
+      const wallPts = target.flatMap((f) => f.walls.flatMap((w) => [w.start, w.end]));
+      if (wallPts.length === 0) continue;
+      const fb = bounds(wallPts);
+      const topY = Math.max(...target.map((f) => f.elevation + f.height));
       const g = roofGeometry(
         { min: fb.min, max: fb.max },
         { type: roof.type, baseY: topY, pitch: roof.pitch, overhang: roof.overhang, thickness: roof.thickness },

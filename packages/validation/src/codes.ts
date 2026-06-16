@@ -25,6 +25,7 @@ export type DiagnosticCode =
   | "unknown-material"
   | "wall-intersection"
   | "invalid-stair-rise"
+  | "missing-stairs"
   // design brief
   | "brief-missing-room"
   | "brief-room-too-small"

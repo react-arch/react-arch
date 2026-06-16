@@ -7,6 +7,7 @@ describe("hitTest", () => {
       walls: [],
       rooms: [],
       objects: [],
+      stairs: [],
       openings: [{ id: "o1", floorId: "f1", type: "opening", p0: [0, 0], p1: [2, 0], center: [1, 0], dir: [1, 0], normal: [0, 1], width: 2 }],
     };
 
@@ -20,6 +21,7 @@ describe("hitTest", () => {
       rooms: [],
       openings: [],
       objects: [{ id: "chair", floorId: "f1", type: "chair", center: [0, 0], size: [2, 1], rotation: Math.PI / 2 }],
+      stairs: [],
     };
 
     expect(hitTest(scene, [0, 0.9], 0.01)).toEqual({ kind: "object", id: "chair" });

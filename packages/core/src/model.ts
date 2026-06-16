@@ -58,6 +58,27 @@ export interface BuildingObject {
   metadata?: Record<string, unknown>;
 }
 
+export type StairKind = "straight";
+
+export interface Stair {
+  id: string;
+  floorId: string;
+  kind: StairKind;
+  /** Plan position of the footprint's start corner (metres). */
+  position: Vec2;
+  /** Width across the treads (metres). */
+  width: number;
+  /** Total plan run along the travel direction (metres). */
+  run: number;
+  /** Total vertical rise (metres). Defaults to the floor height (reaches the floor above). */
+  rise: number;
+  /** Travel direction in the plan, radians (0 = +X/right, increasing clockwise as Y grows down). */
+  direction: number;
+  /** Number of treads. */
+  steps: number;
+  materialId?: string;
+}
+
 export interface Floor {
   id: string;
   buildingId: string;
@@ -70,6 +91,7 @@ export interface Floor {
   rooms: Room[];
   openings: Opening[];
   objects: BuildingObject[];
+  stairs: Stair[];
 }
 
 export type RoofKind = "flat" | "gable" | "hip";
@@ -84,6 +106,8 @@ export interface Roof {
   overhang?: number;
   /** Parapet/slab thickness for flat roofs in metres (default 0.3). */
   thickness?: number;
+  /** Cap a specific floor instead of the building's top visible floor. */
+  floorId?: string;
   materialId?: string;
 }
 
@@ -205,7 +229,15 @@ export function findOpening(
   return undefined;
 }
 
-export type EntityKind = "wall" | "room" | "opening" | "floor" | "object";
+export function findStair(doc: BuildingDocument, stairId: string): Stair | undefined {
+  for (const floor of allFloors(doc)) {
+    const s = floor.stairs.find((x) => x.id === stairId);
+    if (s) return s;
+  }
+  return undefined;
+}
+
+export type EntityKind = "wall" | "room" | "opening" | "floor" | "object" | "stair" | "roof";
 
 export interface EntityRef {
   kind: EntityKind;

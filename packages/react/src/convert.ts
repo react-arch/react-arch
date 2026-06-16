@@ -12,6 +12,7 @@ import {
   type Room,
   type Roof,
   type RoofKind,
+  type Stair,
   type Wall,
 } from "@react-arch/core";
 import { TAG, type RoomSide } from "./tags.js";
@@ -116,6 +117,37 @@ function toRoof(node: Instance, buildingId: string, index: number, usedIds: Set<
     pitch: typeof p.pitch === "number" ? p.pitch : undefined,
     overhang: typeof p.overhang === "number" ? p.overhang : undefined,
     thickness: typeof p.thickness === "number" ? p.thickness : undefined,
+    floorId: str(p, "floorId"),
+    materialId: str(p, "materialId"),
+  };
+}
+
+function toStair(node: Instance, floor: Floor, fallbackId: string, usedIds: Set<string>): Stair {
+  const p = node.props;
+  const DIRS: Record<string, number> = {
+    east: 0,
+    south: Math.PI / 2,
+    west: Math.PI,
+    north: -Math.PI / 2,
+  };
+  const dirProp = str(p, "direction");
+  const direction =
+    typeof p.direction === "number"
+      ? (p.direction * Math.PI) / 180
+      : dirProp && dirProp in DIRS
+        ? DIRS[dirProp]!
+        : 0;
+  return {
+    id: idFromProps(p, fallbackId, usedIds),
+    floorId: floor.id,
+    kind: "straight",
+    position: vec2(p.at) ?? [num(p, "x", 0), num(p, "y", 0)],
+    width: num(p, "width", 1),
+    run: num(p, "run", 3),
+    // Default rise reaches the floor above.
+    rise: num(p, "rise", floor.height),
+    direction,
+    steps: Math.max(2, Math.round(num(p, "steps", 16))),
     materialId: str(p, "materialId"),
   };
 }
@@ -140,11 +172,13 @@ function convertFloor(
     rooms: [],
     openings: [],
     objects: [],
+    stairs: [],
   };
 
   let wallIndex = 0;
   let materialIndex = 0;
   let objectIndex = 0;
+  let stairIndex = 0;
 
   const makeWall = (start: Vec2, end: Vec2, thickness: number, materialId: string | undefined, idBase: string, explicitId?: string): Wall => {
     const w: Wall = {
@@ -249,8 +283,13 @@ function convertFloor(
         floor.objects.push(toObject(child, floor.id, `${floor.id}-object-${objectIndex}`, usedIds));
         break;
 
+      case TAG.stairs:
+        stairIndex += 1;
+        floor.stairs.push(toStair(child, floor, `${floor.id}-stair-${stairIndex}`, usedIds));
+        break;
+
       default:
-        // slab / roof / stairs are reserved; ignored for the MVP model.
+        // slab / roof are reserved; ignored for the MVP model.
         break;
     }
   }

@@ -171,6 +171,22 @@ export function checkQuality(doc: BuildingDocument, options: QualityOptions = {}
       }
     }
 
+    // Stairs: riser height within a comfortable range.
+    for (const st of floor.stairs) {
+      const riser = st.rise / Math.max(st.steps, 1);
+      if (riser > 0.22 + 1e-6 || riser < 0.1 - 1e-6) {
+        diags.push({
+          severity: "warning",
+          code: "invalid-stair-rise",
+          entityKind: "stair",
+          entityId: st.id,
+          message: `Stair ${st.id} has a ${(riser * 100).toFixed(1)} cm riser (comfortable range 10–22 cm)`,
+          fix: "Adjust `steps` or `rise` so each riser is ~17–19 cm.",
+          data: { riserM: round2(riser), steps: st.steps, riseM: st.rise },
+        });
+      }
+    }
+
     // Overlapping rooms (rectangles).
     const rects = floor.rooms.map((r) => ({ room: r, r: rect(r.polygon) }));
     for (let i = 0; i < rects.length; i++) {
@@ -188,6 +204,24 @@ export function checkQuality(doc: BuildingDocument, options: QualityOptions = {}
           });
         }
       }
+    }
+  }
+
+  // Multi-storey buildings need vertical circulation.
+  for (const building of doc.buildings) {
+    const storeys = building.floors.filter((f) => f.walls.length > 0 || f.rooms.length > 0);
+    if (storeys.length < 2) continue;
+    const hasStairs = building.floors.some((f) => f.stairs.length > 0);
+    if (!hasStairs) {
+      diags.push({
+        severity: "warning",
+        code: "missing-stairs",
+        entityKind: "floor",
+        entityId: storeys[0]!.id,
+        message: `${building.name} has ${storeys.length} storeys but no stairs (no vertical circulation)`,
+        fix: "Add a <Stairs> on a floor reaching the storey above.",
+        data: { buildingId: building.id, storeys: storeys.length },
+      });
     }
   }
 

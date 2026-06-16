@@ -1,6 +1,6 @@
 import type { BuildingDocument } from "@react-arch/core";
 import { allFloors, furnitureDims } from "@react-arch/core";
-import { bounds, roofGeometry, wallBoxes, wallDirection, type RoofGeometry, type Vec2 } from "@react-arch/geometry";
+import { bounds, roofGeometry, stairGeometry, wallBoxes, wallDirection, type RoofGeometry, type Vec2 } from "@react-arch/geometry";
 
 /**
  * Plan→world mapping: plan X → world X, plan Y → world Z, height → world Y.
@@ -55,11 +55,23 @@ export interface RoofMesh {
   materialId?: string;
 }
 
+/** One step box of a stair flight. */
+export interface StairMesh {
+  key: string;
+  entityId: string;
+  floorId: string;
+  kind: "stair";
+  position: [number, number, number];
+  size: [number, number, number];
+  materialId?: string;
+}
+
 export interface Scene3D {
   boxes: BoxMesh[];
   slabs: SlabMesh[];
   panels: PanelMesh[];
   objects: ObjectMesh[];
+  stairs: StairMesh[];
   roofs: RoofMesh[];
   center: [number, number, number];
   radius: number;
@@ -88,6 +100,7 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
   const slabs: SlabMesh[] = [];
   const panels: PanelMesh[] = [];
   const objects: ObjectMesh[] = [];
+  const stairs: StairMesh[] = [];
   const roofs: RoofMesh[] = [];
   const allPts: Vec2[] = [];
   let minY = Infinity;
@@ -186,6 +199,36 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
       });
     }
 
+    for (const st of floor.stairs) {
+      const g = stairGeometry({
+        position: st.position,
+        width: st.width,
+        run: st.run,
+        rise: st.rise,
+        direction: st.direction,
+        steps: st.steps,
+        baseY: elevation,
+      });
+      addPlanRect(
+        (g.footprint.min[0] + g.footprint.max[0]) / 2,
+        (g.footprint.min[1] + g.footprint.max[1]) / 2,
+        g.footprint.max[0] - g.footprint.min[0],
+        g.footprint.max[1] - g.footprint.min[1],
+      );
+      maxY = Math.max(maxY, elevation + st.rise);
+      g.steps.forEach((step, i) => {
+        stairs.push({
+          key: `${st.id}-${i}`,
+          entityId: st.id,
+          floorId: floor.id,
+          kind: "stair",
+          position: step.position,
+          size: step.size,
+          materialId: st.materialId,
+        });
+      });
+    }
+
     if (opts.showSlabs !== false && floor.walls.length > 0) {
       const b = bounds(floor.walls.flatMap((w) => [w.start, w.end]));
       slabs.push({
@@ -204,22 +247,30 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
     }
   });
 
-  // Roofs sit over each building's top visible floor.
+  // Roofs cap a building's top visible floor, or a specific floor via floorId.
   for (const building of doc.buildings) {
     if (!building.roofs?.length) continue;
     const bFloors = building.floors.filter((f) =>
       opts.floorIds === "all" ? f.visible : opts.floorIds.includes(f.id),
     );
-    const wallPts = bFloors.flatMap((f) => f.walls.flatMap((w) => [w.start, w.end]));
-    if (wallPts.length === 0) continue;
-    const fb = bounds(wallPts);
-    let topY = -Infinity;
-    for (const f of bFloors) {
-      const idx = ordered.indexOf(f);
-      const eff = f.elevation + (opts.exploded ? idx * gap : 0);
-      topY = Math.max(topY, eff + f.height);
-    }
+    if (bFloors.length === 0) continue;
+    const topYof = (floorsForRoof: typeof bFloors) => {
+      let topY = -Infinity;
+      let pts: Vec2[] = [];
+      for (const f of floorsForRoof) {
+        const idx = ordered.indexOf(f);
+        const eff = f.elevation + (opts.exploded ? idx * gap : 0);
+        topY = Math.max(topY, eff + f.height);
+        pts = pts.concat(f.walls.flatMap((w) => [w.start, w.end]));
+      }
+      return { topY, pts };
+    };
     for (const roof of building.roofs) {
+      const target = roof.floorId ? bFloors.filter((f) => f.id === roof.floorId) : bFloors;
+      if (target.length === 0) continue;
+      const { topY, pts } = topYof(target);
+      if (pts.length === 0) continue;
+      const fb = bounds(pts);
       const geometry = roofGeometry(
         { min: fb.min, max: fb.max },
         { type: roof.type, baseY: topY, pitch: roof.pitch, overhang: roof.overhang, thickness: roof.thickness },
@@ -235,5 +286,5 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
   const cz = (b.min[1] + b.max[1]) / 2;
   const cy = Number.isFinite(minY) ? (minY + maxY) / 2 : 1.5;
   const radius = Math.max(b.width, b.height, maxY - minY, 4) * 0.75;
-  return { boxes, slabs, panels, objects, roofs, center: [cx, cy, cz], radius, floorY: Number.isFinite(minY) ? minY : 0 };
+  return { boxes, slabs, panels, objects, stairs, roofs, center: [cx, cy, cz], radius, floorY: Number.isFinite(minY) ? minY : 0 };
 }

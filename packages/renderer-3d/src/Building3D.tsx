@@ -226,6 +226,28 @@ export function Building3D(props: Building3DProps) {
           );
         })}
 
+        {scene.stairs.map((st) => {
+          const sel = isSelected(st.entityId);
+          return (
+            <mesh key={st.key} position={st.position} castShadow receiveShadow
+              onClick={(e) => { e.stopPropagation(); props.onSelect?.({ kind: "stair", id: st.entityId }); }}>
+              <boxGeometry args={st.size} />
+              <meshStandardMaterial
+                color={sel ? ACCENT : colorFor(doc, st.materialId, "#b8b4ad")}
+                roughness={0.8}
+                metalness={0}
+                envMapIntensity={0.4}
+                wireframe={props.wireframe}
+                transparent={props.xray}
+                opacity={props.xray ? 0.4 : 1}
+                polygonOffset={sel}
+                polygonOffsetFactor={sel ? -4 : 0}
+                polygonOffsetUnits={sel ? -4 : 0}
+              />
+            </mesh>
+          );
+        })}
+
         {props.showRoof &&
           scene.roofs.map((r, i) => {
             const color = colorFor(doc, r.materialId, "#474b54");

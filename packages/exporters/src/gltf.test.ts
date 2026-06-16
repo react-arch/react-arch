@@ -26,6 +26,7 @@ describe("buildExportScene", () => {
               rooms: [],
               openings: [],
               objects: [{ id: "sofa", floorId: "f1", type: "sofa", position: [1, 2, 0], rotation: [0, 0, 0], scale: [1, 1, 1] }],
+              stairs: [],
             },
           ],
         },

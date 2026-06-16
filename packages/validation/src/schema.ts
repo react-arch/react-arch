@@ -53,6 +53,19 @@ export const BuildingObjectSchema = z.object({
   metadata: z.record(z.unknown()).optional(),
 });
 
+export const StairSchema = z.object({
+  id: z.string().min(1),
+  floorId: z.string().min(1),
+  kind: z.enum(["straight"]),
+  position: vec2,
+  width: z.number().positive(),
+  run: z.number().positive(),
+  rise: z.number().positive(),
+  direction: finite,
+  steps: z.number().int().positive(),
+  materialId: z.string().optional(),
+});
+
 export const FloorSchema = z.object({
   id: z.string().min(1),
   buildingId: z.string().min(1),
@@ -65,6 +78,7 @@ export const FloorSchema = z.object({
   rooms: z.array(RoomSchema),
   openings: z.array(OpeningSchema),
   objects: z.array(BuildingObjectSchema),
+  stairs: z.array(StairSchema),
 });
 
 export const RoofSchema = z.object({
@@ -74,6 +88,7 @@ export const RoofSchema = z.object({
   pitch: z.number().optional(),
   overhang: z.number().optional(),
   thickness: z.number().optional(),
+  floorId: z.string().optional(),
   materialId: z.string().optional(),
 });
 

@@ -48,11 +48,27 @@ export interface ObjectDraw {
   size: [number, number];
   rotation: number;
 }
+export interface StairDraw {
+  id: string;
+  floorId: string;
+  /** Bottom-start corner. */
+  origin: Vec2;
+  /** Unit travel direction (up the flight). */
+  dir: Vec2;
+  /** Unit width direction (perpendicular). */
+  normal: Vec2;
+  width: number;
+  run: number;
+  steps: number;
+  /** Footprint polygon (for fill + hit-test). */
+  polygon: Vec2[];
+}
 export interface PlanScene {
   walls: WallDraw[];
   rooms: RoomDraw[];
   openings: OpeningDraw[];
   objects: ObjectDraw[];
+  stairs: StairDraw[];
 }
 
 function visibleFloors(doc: BuildingDocument, floorIds: string[] | "all"): Floor[] {
@@ -65,7 +81,7 @@ export function buildPlanScene(
   doc: BuildingDocument,
   floorIds: string[] | "all",
 ): PlanScene {
-  const scene: PlanScene = { walls: [], rooms: [], openings: [], objects: [] };
+  const scene: PlanScene = { walls: [], rooms: [], openings: [], objects: [], stairs: [] };
   for (const floor of visibleFloors(doc, floorIds)) {
     for (const r of floor.rooms) {
       scene.rooms.push({
@@ -116,6 +132,26 @@ export function buildPlanScene(
         rotation: ob.rotation[2],
       });
     }
+    for (const st of floor.stairs) {
+      const dir: Vec2 = [Math.cos(st.direction), Math.sin(st.direction)];
+      const nrm: Vec2 = [-dir[1], dir[0]];
+      const o = st.position;
+      const a: Vec2 = o;
+      const b: Vec2 = [o[0] + dir[0] * st.run, o[1] + dir[1] * st.run];
+      const c: Vec2 = [b[0] + nrm[0] * st.width, b[1] + nrm[1] * st.width];
+      const dd: Vec2 = [o[0] + nrm[0] * st.width, o[1] + nrm[1] * st.width];
+      scene.stairs.push({
+        id: st.id,
+        floorId: floor.id,
+        origin: o,
+        dir,
+        normal: nrm,
+        width: st.width,
+        run: st.run,
+        steps: st.steps,
+        polygon: [a, b, c, dd],
+      });
+    }
   }
   return scene;
 }
@@ -141,6 +177,11 @@ export function hitTest(
     const dy = Math.abs(dx0 * s + dy0 * c);
     if (dx <= ob.size[0] / 2 + tolerance && dy <= ob.size[1] / 2 + tolerance) {
       return { kind: "object", id: ob.id };
+    }
+  }
+  for (const st of scene.stairs) {
+    if (pointInPolygon(point, st.polygon)) {
+      return { kind: "stair", id: st.id };
     }
   }
   for (const w of scene.walls) {

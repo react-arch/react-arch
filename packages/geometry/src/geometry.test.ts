@@ -4,6 +4,7 @@ import { openingFits, openingSpan, wallLength, wallPolygon } from "./wall.js";
 import { segmentIntersection } from "./line.js";
 import { findSnap, snapToGrid } from "./snap.js";
 import { roofGeometry } from "./roof.js";
+import { stairGeometry } from "./stair.js";
 
 describe("polygon", () => {
   it("computes the area of a unit square", () => {
@@ -103,5 +104,23 @@ describe("roof", () => {
     expect(Math.max(...xs)).toBeCloseTo(10);
     const ridgeXs = [...new Set(xs)].filter((x) => x > 0.001 && x < 9.999);
     expect(ridgeXs.some((x) => Math.abs(x - 3) < 1e-6 || Math.abs(x - 7) < 1e-6)).toBe(true);
+  });
+});
+
+describe("stair", () => {
+  it("climbs evenly from base to base+rise over N steps", () => {
+    const g = stairGeometry({ position: [0, 0], width: 1, run: 4, rise: 3, direction: 0, steps: 6, baseY: 0 });
+    expect(g.steps).toHaveLength(6);
+    // Each step's top = (i+1) * rise/steps; the last reaches the full rise.
+    const tops = g.steps.map((s) => s.position[1] + s.size[1] / 2);
+    expect(Math.max(...tops)).toBeCloseTo(3);
+    expect(tops[0]).toBeCloseTo(0.5);
+  });
+
+  it("footprint covers the run × width rectangle", () => {
+    const g = stairGeometry({ position: [2, 1], width: 1, run: 4, rise: 3, direction: 0, steps: 6, baseY: 0 });
+    expect(g.footprint.min).toEqual([2, 1]);
+    expect(g.footprint.max[0]).toBeCloseTo(6);
+    expect(g.footprint.max[1]).toBeCloseTo(2);
   });
 });

@@ -1,4 +1,4 @@
-import { Building, Door, Floor, Roof, Room, Window, Fixture } from "@react-arch/react";
+import { Building, Door, Floor, Roof, Room, Stairs, Window, Fixture } from "@react-arch/react";
 
 /**
  * A deeper, two-storey family house on a 12 × 9 m footprint with a central
@@ -17,6 +17,10 @@ export function FamilyHouse() {
         <Room id="g-hall" name="Entry Hall" x={5} y={0} width={2} depth={9} usage="hallway">
           <Door wall="south" offset={1} width={1.0} height={2.2} />
         </Room>
+
+        {/* Straight flight in the hall, climbing north to the first-floor landing. */}
+        <Stairs at={[5.5, 4.5]} direction="north" width={1} run={3.5} steps={16} />
+
 
         <Room id="living" name="Living Room" x={0} y={0} width={5} depth={5} usage="living">
           <Door wall="east" offset={2.5} width={0.9} height={2.1} />

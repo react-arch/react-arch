@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, DoorOpen, Layers, Square, Box, Armchair } from "lucide-react";
+import { ChevronDown, ChevronRight, DoorOpen, Layers, Square, Box, Armchair, MoveUpRight } from "lucide-react";
 import type { BuildingDocument, EntityRef, Floor, Opening, BuildingObject } from "@react-arch/core";
 import { pointInPolygon } from "@react-arch/geometry";
 import { useStudio } from "../store.js";
@@ -111,6 +111,17 @@ function FloorNode({
           ))}
           {grouped.orphanObjects.map((ob) => (
             <ObjectRow key={ob.id} depth={2} obj={ob} onSelect={onSelect} isSel={isSel} />
+          ))}
+          {floor.stairs.map((st) => (
+            <Row
+              key={st.id}
+              depth={2}
+              selected={isSel("stair", st.id)}
+              onClick={() => onSelect({ kind: "stair", id: st.id })}
+              icon={<MoveUpRight size={12} className="text-zinc-500" />}
+              label="stairs"
+              meta={`${st.steps} steps`}
+            />
           ))}
           {floor.walls.length > 0 && (
             <Row depth={2} label={`${floor.walls.length} walls`} icon={<Box size={12} className="text-zinc-600" />} muted />
