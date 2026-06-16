@@ -1,5 +1,14 @@
 # @react-arch/renderer-3d
 
+## 0.1.3
+
+### Patch Changes
+
+- Updated dependencies [73552ee]
+  - @react-arch/core@0.1.3
+  - @react-arch/geometry@0.1.3
+  - @react-arch/shared@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @react-arch/importers
 
+## 0.1.3
+
+### Patch Changes
+
+- Updated dependencies [73552ee]
+  - @react-arch/core@0.1.3
+  - @react-arch/validation@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

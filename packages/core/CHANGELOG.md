@@ -1,5 +1,15 @@
 # @react-arch/core
 
+## 0.1.3
+
+### Patch Changes
+
+- 73552ee: Apply the React Arch brand to the renderers (selection highlight accent #2563EB)
+  and ship the shared, embeddable `@react-arch/studio` Studio component used by both
+  the dev shell and `create-react-arch-app`.
+  - @react-arch/geometry@0.1.3
+  - @react-arch/shared@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

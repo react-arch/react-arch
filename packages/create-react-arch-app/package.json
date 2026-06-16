@@ -1,12 +1,21 @@
 {
   "name": "create-react-arch-app",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Scaffold a new React Arch project (npm create react-arch-app).",
   "type": "module",
   "bin": {
     "create-react-arch-app": "index.mjs"
   },
-  "files": ["index.mjs", "template"],
-  "keywords": ["react-arch", "create", "scaffold", "architecture", "floor-plan"],
+  "files": [
+    "index.mjs",
+    "template"
+  ],
+  "keywords": [
+    "react-arch",
+    "create",
+    "scaffold",
+    "architecture",
+    "floor-plan"
+  ],
   "license": "MIT"
 }
