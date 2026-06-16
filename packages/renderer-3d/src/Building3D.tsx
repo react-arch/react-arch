@@ -61,7 +61,7 @@ export function Building3D(props: Building3DProps) {
         shadows
         dpr={[1, 2]}
         camera={{ position: [12, 10, 14], fov: 45 }}
-        gl={{ logarithmicDepthBuffer: true, antialias: true }}
+        gl={{ antialias: true }}
         onPointerMissed={() => props.onSelect?.(null)}
       >
         <color attach="background" args={["#0f1115"]} />

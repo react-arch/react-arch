@@ -63,6 +63,9 @@ export interface Build3DOptions {
 }
 
 const SLAB_THICKNESS = 0.14;
+/** Drop the slab top slightly below the floor line to avoid sharing a plane
+ * with the wall-tops of the floor below (prevents z-fighting). 2 cm, invisible. */
+const SLAB_TOP_GAP = 0.02;
 
 export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene3D {
   const floors = allFloors(doc);
@@ -160,7 +163,10 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
         entityId: floor.id,
         floorId: floor.id,
         kind: "slab",
-        position: [(b.min[0] + b.max[0]) / 2, elevation - SLAB_THICKNESS / 2, (b.min[1] + b.max[1]) / 2],
+        // Sit the slab top SLAB_TOP_GAP below the floor line so it is never
+        // coplanar with the tops of the walls of the floor below (which reach
+        // exactly this elevation) — the root cause of the z-fighting seam.
+        position: [(b.min[0] + b.max[0]) / 2, elevation - SLAB_TOP_GAP - SLAB_THICKNESS / 2, (b.min[1] + b.max[1]) / 2],
         size: [b.width + 0.4, SLAB_THICKNESS, b.height + 0.4],
       });
     }
