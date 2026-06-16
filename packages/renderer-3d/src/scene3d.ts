@@ -55,14 +55,13 @@ export interface RoofMesh {
   materialId?: string;
 }
 
-/** One step box of a stair flight. */
+/** A stair flight as a single triangle mesh (raw vertex positions). */
 export interface StairMesh {
   key: string;
   entityId: string;
   floorId: string;
   kind: "stair";
-  position: [number, number, number];
-  size: [number, number, number];
+  positions: number[];
   materialId?: string;
 }
 
@@ -216,16 +215,13 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
         g.footprint.max[1] - g.footprint.min[1],
       );
       maxY = Math.max(maxY, elevation + st.rise);
-      g.steps.forEach((step, i) => {
-        stairs.push({
-          key: `${st.id}-${i}`,
-          entityId: st.id,
-          floorId: floor.id,
-          kind: "stair",
-          position: step.position,
-          size: step.size,
-          materialId: st.materialId,
-        });
+      stairs.push({
+        key: st.id,
+        entityId: st.id,
+        floorId: floor.id,
+        kind: "stair",
+        positions: g.positions,
+        materialId: st.materialId,
       });
     }
 

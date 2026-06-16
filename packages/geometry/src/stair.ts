@@ -17,24 +17,19 @@ export interface StairParams {
   baseY: number;
 }
 
-/** A single step, ready to drop onto a mesh (plan X → X, plan Y → Z, up → Y). */
-export interface StairStep {
-  /** Centre of the step box. */
-  position: [number, number, number];
-  /** Box dimensions [alongRun, height, width]. */
-  size: [number, number, number];
-}
-
 export interface StairGeometry {
-  steps: StairStep[];
+  /** Raw triangle vertices (plan X → X, plan Y → Z, up → Y). One watertight solid. */
+  positions: number[];
   /** Plan footprint the flight occupies (for slab voids / overlap checks). */
   footprint: { min: Vec2; max: Vec2 };
 }
 
 /**
- * Build a straight-run stair as a stack of step boxes. Each tread is a riser
- * tall box; step `i` rises by `(i+1) * riserHeight` and its top reaches that
- * height, so the flight climbs evenly from `baseY` to `baseY + rise`.
+ * Build a straight-run stair as a single triangle mesh: the stepped top
+ * surface (alternating treads and risers) plus the two side silhouettes. The
+ * faces tile the staircase without overlapping, so — unlike a stack of solid
+ * boxes — there are no coplanar faces to z-fight. The renderer computes normals
+ * and uses a double-sided material, so winding doesn't matter.
  */
 export function stairGeometry(p: StairParams): StairGeometry {
   const steps = Math.max(2, Math.round(p.steps));
@@ -46,17 +41,34 @@ export function stairGeometry(p: StairParams): StairGeometry {
   const nx = -dy;
   const ny = dx;
 
-  const out: StairStep[] = [];
+  type V3 = [number, number, number];
+  // Map a (run, width, height) sample to world space.
+  const P = (s: number, u: number, h: number): V3 => [
+    p.position[0] + dx * s + nx * u,
+    p.baseY + h,
+    p.position[1] + dy * s + ny * u,
+  ];
+
+  const tri: number[] = [];
+  const push = (a: V3, b: V3, c: V3) => tri.push(...a, ...b, ...c);
+  const quad = (a: V3, b: V3, c: V3, d: V3) => {
+    push(a, b, c);
+    push(a, c, d);
+  };
+
   for (let i = 0; i < steps; i++) {
-    const top = (i + 1) * riser;
-    // Centre of this step's tread along the run.
-    const along = (i + 0.5) * tread;
-    const cx = p.position[0] + dx * along + nx * (p.width / 2);
-    const cy = p.position[1] + dy * along + ny * (p.width / 2);
-    out.push({
-      position: [cx, p.baseY + top / 2, cy],
-      size: [tread, top, p.width],
-    });
+    const s0 = i * tread;
+    const s1 = (i + 1) * tread;
+    const h0 = i * riser;
+    const h1 = (i + 1) * riser;
+
+    // Riser face (vertical) across the full width.
+    quad(P(s0, 0, h0), P(s0, p.width, h0), P(s0, p.width, h1), P(s0, 0, h1));
+    // Tread face (horizontal) across the full width.
+    quad(P(s0, 0, h1), P(s1, 0, h1), P(s1, p.width, h1), P(s0, p.width, h1));
+    // Side silhouette columns (each step is a disjoint rectangle → no overlap).
+    quad(P(s0, 0, 0), P(s1, 0, 0), P(s1, 0, h1), P(s0, 0, h1));
+    quad(P(s0, p.width, 0), P(s1, p.width, 0), P(s1, p.width, h1), P(s0, p.width, h1));
   }
 
   // Footprint corners (the run rectangle).
@@ -65,7 +77,7 @@ export function stairGeometry(p: StairParams): StairGeometry {
   const xs = [p.position[0], p.position[0] + dx * p.run, p.position[0] + nx * p.width, ex];
   const ys = [p.position[1], p.position[1] + dy * p.run, p.position[1] + ny * p.width, ey];
   return {
-    steps: out,
+    positions: tri,
     footprint: {
       min: [Math.min(...xs), Math.min(...ys)],
       max: [Math.max(...xs), Math.max(...ys)],

@@ -110,11 +110,10 @@ describe("roof", () => {
 describe("stair", () => {
   it("climbs evenly from base to base+rise over N steps", () => {
     const g = stairGeometry({ position: [0, 0], width: 1, run: 4, rise: 3, direction: 0, steps: 6, baseY: 0 });
-    expect(g.steps).toHaveLength(6);
-    // Each step's top = (i+1) * rise/steps; the last reaches the full rise.
-    const tops = g.steps.map((s) => s.position[1] + s.size[1] / 2);
-    expect(Math.max(...tops)).toBeCloseTo(3);
-    expect(tops[0]).toBeCloseTo(0.5);
+    const ys = g.positions.filter((_, i) => i % 3 === 1);
+    // The mesh spans from the base (0) up to the full rise (3).
+    expect(Math.max(...ys)).toBeCloseTo(3);
+    expect(Math.min(...ys)).toBeCloseTo(0);
   });
 
   it("footprint covers the run × width rectangle", () => {

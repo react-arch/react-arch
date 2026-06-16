@@ -88,6 +88,18 @@ export function Building3D(props: Building3DProps) {
     [scene.roofs],
   );
 
+  // Pre-build Three.js geometries for stairs.
+  const stairGeos = useMemo(
+    () =>
+      scene.stairs.map((st) => {
+        const g = new THREE.BufferGeometry();
+        g.setAttribute("position", new THREE.Float32BufferAttribute(st.positions, 3));
+        g.computeVertexNormals();
+        return g;
+      }),
+    [scene.stairs],
+  );
+
   return (
     <div className={props.className} style={{ width: "100%", height: "100%", background: "#0f1115" }}>
       <Canvas
@@ -226,17 +238,17 @@ export function Building3D(props: Building3DProps) {
           );
         })}
 
-        {scene.stairs.map((st) => {
+        {scene.stairs.map((st, i) => {
           const sel = isSelected(st.entityId);
           return (
-            <mesh key={st.key} position={st.position} castShadow receiveShadow
+            <mesh key={st.key} geometry={stairGeos[i]} castShadow receiveShadow
               onClick={(e) => { e.stopPropagation(); props.onSelect?.({ kind: "stair", id: st.entityId }); }}>
-              <boxGeometry args={st.size} />
               <meshStandardMaterial
                 color={sel ? ACCENT : colorFor(doc, st.materialId, "#b8b4ad")}
                 roughness={0.8}
                 metalness={0}
                 envMapIntensity={0.4}
+                side={THREE.DoubleSide}
                 wireframe={props.wireframe}
                 transparent={props.xray}
                 opacity={props.xray ? 0.4 : 1}

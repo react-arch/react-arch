@@ -92,13 +92,12 @@ export function buildExportScene(
         position: st.position, width: st.width, run: st.run, rise: st.rise,
         direction: st.direction, steps: st.steps, baseY: el,
       });
-      const mat = matFor(colorFor(st.materialId, "#b8b4ad"), { roughness: 0.8 });
-      g.steps.forEach((step, i) => {
-        const mesh = new THREE.Mesh(new THREE.BoxGeometry(...step.size), mat);
-        mesh.name = `${st.id}-${i}`;
-        mesh.position.set(...step.position);
-        floorGroup.add(mesh);
-      });
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(g.positions, 3));
+      geo.computeVertexNormals();
+      const mesh = new THREE.Mesh(geo, matFor(colorFor(st.materialId, "#b8b4ad"), { roughness: 0.8, side: THREE.DoubleSide }));
+      mesh.name = st.id;
+      floorGroup.add(mesh);
     }
 
     if (floor.walls.length > 0) {
