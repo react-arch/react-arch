@@ -32,8 +32,10 @@ function CameraRig({ scene }: { scene: Scene3D }) {
     const [cx, cy, cz] = scene.center;
     const r = scene.radius;
     camera.position.set(cx + r * 1.4, cy + r * 1.3, cz + r * 1.6);
-    camera.near = 0.1;
-    camera.far = r * 40 + 100;
+    // Keep the near/far range tight for good depth-buffer precision (reduces
+    // z-fighting between stacked floors that share a plane).
+    camera.near = Math.max(0.05, r * 0.02);
+    camera.far = r * 8 + 40;
     camera.updateProjectionMatrix();
     if (controls.current) {
       controls.current.target.set(cx, cy, cz);
@@ -59,6 +61,7 @@ export function Building3D(props: Building3DProps) {
         shadows
         dpr={[1, 2]}
         camera={{ position: [12, 10, 14], fov: 45 }}
+        gl={{ logarithmicDepthBuffer: true, antialias: true }}
         onPointerMissed={() => props.onSelect?.(null)}
       >
         <color attach="background" args={["#0f1115"]} />
@@ -78,7 +81,15 @@ export function Building3D(props: Building3DProps) {
           <mesh key={s.key} position={s.position} receiveShadow
             onClick={(e) => { e.stopPropagation(); props.onSelect?.({ kind: "floor", id: s.floorId }); }}>
             <boxGeometry args={s.size} />
-            <meshStandardMaterial color={isSelected(s.floorId) ? ACCENT : "#3a3d44"} roughness={0.95} />
+            {/* polygonOffset pushes the slab slightly back in depth so it never
+                ties with a coplanar wall-top from the floor below. */}
+            <meshStandardMaterial
+              color={isSelected(s.floorId) ? ACCENT : "#3a3d44"}
+              roughness={0.95}
+              polygonOffset
+              polygonOffsetFactor={1}
+              polygonOffsetUnits={1}
+            />
           </mesh>
         ))}
 
