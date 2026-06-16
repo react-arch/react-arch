@@ -2,6 +2,7 @@
   "name": "react-arch",
   "version": "0.1.0",
   "description": "React Arch CLI — launch the Studio for your project (npx react-arch studio).",
+  "private": true,
   "type": "module",
   "bin": {
     "react-arch": "bin/react-arch.mjs"
