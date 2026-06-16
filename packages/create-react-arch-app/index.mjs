@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdirSync, writeFileSync, existsSync, readdirSync } from "node:fs";
+import { mkdirSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 const VERSION = "0.1.1";
@@ -13,9 +13,16 @@ const targetArg = args[0] ?? "my-building";
 const dir = path.resolve(process.cwd(), targetArg);
 const name = path.basename(dir).replace(/[^a-z0-9-]/gi, "-").toLowerCase();
 
-if (existsSync(dir) && readdirSync(dir).length > 0) {
-  console.error(`Target directory "${targetArg}" exists and is not empty.`);
-  process.exit(1);
+if (existsSync(dir)) {
+  const stat = statSync(dir);
+  if (!stat.isDirectory()) {
+    console.error(`Target path "${targetArg}" exists and is not a directory.`);
+    process.exit(1);
+  }
+  if (readdirSync(dir).length > 0) {
+    console.error(`Target directory "${targetArg}" exists and is not empty.`);
+    process.exit(1);
+  }
 }
 
 // Pin to the published library line.

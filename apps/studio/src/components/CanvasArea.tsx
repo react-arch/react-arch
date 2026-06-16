@@ -54,7 +54,7 @@ export function CanvasArea({ doc }: { doc: BuildingDocument }) {
 }
 
 function FloorStack({ doc }: { doc: BuildingDocument }) {
-  const { selection, setSelection } = useStudio();
+  const { selection, setSelection, showMeasurements } = useStudio();
   // Top floor first.
   const floors = [...allFloors(doc)].sort((a, b) => b.elevation - a.elevation);
   return (
@@ -71,7 +71,7 @@ function FloorStack({ doc }: { doc: BuildingDocument }) {
               floorIds={[f.id]}
               selected={selection}
               onSelect={setSelection}
-              showMeasurements
+              showMeasurements={showMeasurements}
             />
           </div>
         </div>

@@ -24,7 +24,7 @@ export function App() {
 
   // Default to the first registered building once they appear.
   useEffect(() => {
-    if (!compositionId && compositions.length > 0) {
+    if (compositions.length > 0 && (!compositionId || !compositions.some((c) => c.id === compositionId))) {
       setComposition(compositions[0]!.id);
     }
   }, [compositions, compositionId, setComposition]);

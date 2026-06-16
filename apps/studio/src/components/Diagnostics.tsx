@@ -44,6 +44,8 @@ export function Diagnostics({ diagnostics }: { diagnostics: Diagnostic[] }) {
 
 function guessKind(d: Diagnostic, id: string) {
   // Best-effort: map common codes to entity kinds for selection.
+  if (d.code === "bad-wall-ref" && d.message.startsWith("Opening")) return { kind: "opening" as const, id };
+  if (d.code === "bad-wall-ref" && d.message.startsWith("Room")) return { kind: "room" as const, id };
   if (d.code.includes("wall")) return { kind: "wall" as const, id };
   if (d.code.includes("room")) return { kind: "room" as const, id };
   if (d.code.includes("opening")) return { kind: "opening" as const, id };
