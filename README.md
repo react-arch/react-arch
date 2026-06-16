@@ -42,25 +42,25 @@ multi-floor house already loaded. Edit any building under
 
 ## Using it in your own project
 
-React Arch ships two CLIs (Remotion-style):
+Scaffold a project that renders your building with a live 2D / 3D viewer, using
+the published `@react-arch/*` packages:
 
 ```bash
-# Scaffold a new project
 npm create react-arch-app my-building
 cd my-building
 npm install
-
-# Launch the Studio for your project's registered buildings
-npm run studio          # → react-arch studio
-# or directly:
-npx react-arch studio [entry] --port 5173 --open
+npm run dev
 ```
 
-`react-arch studio` loads your **registration root** — a file that
-default-exports a component rendering `<Composition id name component />`
-entries — and renders the selected building. If you don't pass an `entry`, it
-looks for `src/Root.tsx`, `src/root.tsx`, `src/index.tsx`, or `src/index.ts`.
-Your code stays the source of truth; the Studio just visualises it.
+This generates a small Vite app: a `House.tsx` building, and an `App.tsx` that
+derives the model with `renderToDocument(<House />)` and draws it via
+`@react-arch/renderer-2d` / `@react-arch/renderer-3d`. Edit `House.tsx` and the
+preview updates live — your code is the source of truth.
+
+> The full **React Arch Studio** (building tree, inspector, floor navigation,
+> exports) and the `react-arch studio` CLI run in this repo today (`pnpm dev`).
+> Publishing the Studio CLI to npm is on the roadmap — it ships a live bundler,
+> so it needs more packaging work than the libraries.
 
 ## The core idea
 

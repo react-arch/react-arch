@@ -2,7 +2,7 @@
 import { mkdirSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 const args = process.argv.slice(2).filter((a) => !a.startsWith("-"));
 if (process.argv.includes("-v") || process.argv.includes("--version")) {
   console.log(VERSION);
@@ -18,6 +18,9 @@ if (existsSync(dir) && readdirSync(dir).length > 0) {
   process.exit(1);
 }
 
+// Pin to the published library line.
+const RA = "^0.1.0";
+
 const files = {
   "package.json": JSON.stringify(
     {
@@ -26,17 +29,27 @@ const files = {
       version: "0.0.0",
       type: "module",
       scripts: {
-        studio: "react-arch studio",
-        "studio:open": "react-arch studio --open",
+        dev: "vite",
+        build: "vite build",
+        preview: "vite preview",
       },
       dependencies: {
-        "@react-arch/react": "^0.1.0",
+        "@react-arch/core": RA,
+        "@react-arch/react": RA,
+        "@react-arch/renderer-2d": RA,
+        "@react-arch/renderer-3d": RA,
+        "@react-three/drei": "^9.114.0",
+        "@react-three/fiber": "^8.17.10",
         react: "^18.3.1",
+        "react-dom": "^18.3.1",
+        three: "^0.169.0",
       },
       devDependencies: {
-        "react-arch": "^0.1.0",
         "@types/react": "^18.3.12",
+        "@types/react-dom": "^18.3.1",
+        "@vitejs/plugin-react": "^4.3.4",
         typescript: "^5.7.2",
+        vite: "^6.0.0",
       },
     },
     null,
@@ -47,7 +60,7 @@ const files = {
     {
       compilerOptions: {
         target: "ES2022",
-        lib: ["ES2022", "DOM"],
+        lib: ["ES2022", "DOM", "DOM.Iterable"],
         module: "ESNext",
         moduleResolution: "Bundler",
         jsx: "react-jsx",
@@ -55,7 +68,7 @@ const files = {
         skipLibCheck: true,
         noEmit: true,
       },
-      include: ["src"],
+      include: ["src", "vite.config.ts"],
     },
     null,
     2,
@@ -63,19 +76,79 @@ const files = {
 
   ".gitignore": "node_modules/\ndist/\n.DS_Store\n",
 
-  "src/Root.tsx": `import { Composition } from "@react-arch/react";
+  "index.html": `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${name} — React Arch</title>
+    <style>html,body,#root{height:100%;margin:0}</style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+`,
+
+  "vite.config.ts": `import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({ plugins: [react()] });
+`,
+
+  "src/main.tsx": `import { createRoot } from "react-dom/client";
+import { App } from "./App.js";
+
+createRoot(document.getElementById("root")!).render(<App />);
+`,
+
+  "src/App.tsx": `import { useState } from "react";
+import { renderToDocument } from "@react-arch/react";
+import { Plan2D } from "@react-arch/renderer-2d";
+import { Building3D } from "@react-arch/renderer-3d";
 import { House } from "./House.js";
 
 /**
- * The registration root. Each <Composition> registers a building the Studio
- * can visualise. Run \`npm run studio\` and edit House.tsx — the views update
- * live.
+ * A tiny viewer for your building. Your code is the source of truth — edit
+ * House.tsx and this 2D / 3D preview updates live (Vite HMR).
  */
-export default function Root() {
+export function App() {
+  const [view, setView] = useState<"2d" | "3d">("2d");
+  // Derive the semantic model from the React component tree.
+  const doc = renderToDocument(<House />);
+
+  const tab = (id: "2d" | "3d", label: string) => (
+    <button
+      onClick={() => setView(id)}
+      style={{
+        padding: "4px 12px",
+        borderRadius: 6,
+        border: "1px solid #2a2e37",
+        background: view === id ? "#4c8eff" : "#1a1d23",
+        color: view === id ? "#fff" : "#9aa3b2",
+        cursor: "pointer",
+      }}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <>
-      <Composition id="house" name="My House" component={House} />
-    </>
+    <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: "#0f1115", color: "#d8dbe2", fontFamily: "system-ui, sans-serif" }}>
+      <header style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: "1px solid #262a32" }}>
+        <strong style={{ flex: 1 }}>{doc.name}</strong>
+        {tab("2d", "2D Plan")}
+        {tab("3d", "3D")}
+      </header>
+      <main style={{ flex: 1, minHeight: 0 }}>
+        {view === "2d" ? (
+          <Plan2D document={doc} floorIds="all" />
+        ) : (
+          <Building3D document={doc} floorIds="all" />
+        )}
+      </main>
+    </div>
   );
 }
 `,
@@ -104,17 +177,18 @@ export function House() {
 
   "README.md": `# ${name}
 
-A [React Arch](https://react-arch.com) project — declarative building design.
-
-## Develop
+A [React Arch](https://github.com/react-arch/react-arch) project — declarative
+building design with React.
 
 \`\`\`bash
 npm install
-npm run studio      # opens React Arch Studio for this project
+npm run dev      # Vite dev server with a live 2D / 3D viewer
 \`\`\`
 
-Edit \`src/House.tsx\` (or add buildings in \`src/Root.tsx\`) and the Studio's
-2D / 3D / JSON views update live.
+Edit \`src/House.tsx\` (or add floors/rooms) and the preview updates live. The
+building component renders to a semantic model via \`renderToDocument\`, which the
+\`@react-arch/renderer-2d\` and \`@react-arch/renderer-3d\` packages draw.
+\`\`\`
 `,
 };
 
@@ -132,7 +206,7 @@ Created a React Arch project in ${rel}
 Next steps:
   cd ${rel}
   npm install
-  npm run studio
+  npm run dev
 
-Then edit src/House.tsx and watch the Studio update live.
+Then edit src/House.tsx and watch the 2D / 3D preview update live.
 `);
