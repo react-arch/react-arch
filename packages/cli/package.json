@@ -1,0 +1,15 @@
+{
+  "name": "react-arch",
+  "version": "0.1.0",
+  "description": "React Arch CLI — launch the Studio for your project (npx react-arch studio).",
+  "type": "module",
+  "bin": {
+    "react-arch": "bin/react-arch.mjs"
+  },
+  "files": ["bin"],
+  "dependencies": {
+    "@react-arch/studio": "workspace:*"
+  },
+  "keywords": ["react-arch", "architecture", "floor-plan", "studio", "cli"],
+  "license": "MIT"
+}

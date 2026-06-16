@@ -18,3 +18,5 @@ export function Root() {
     </>
   );
 }
+
+export default Root;

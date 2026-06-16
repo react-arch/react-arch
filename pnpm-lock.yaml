@@ -137,6 +137,12 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.19.21)(lightningcss@1.32.0)
 
+  packages/cli:
+    dependencies:
+      '@react-arch/studio':
+        specifier: workspace:*
+        version: link:../../apps/studio
+
   packages/core:
     dependencies:
       '@react-arch/geometry':
@@ -152,6 +158,8 @@ importers:
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.19.21)(lightningcss@1.32.0)
+
+  packages/create-react-arch-app: {}
 
   packages/exporters:
     dependencies:
