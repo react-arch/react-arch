@@ -11,3 +11,4 @@ export * from "./commands.js";
 export * from "./history.js";
 export * from "./serialize.js";
 export * from "./defaults.js";
+export * from "./furniture.js";

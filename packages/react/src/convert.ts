@@ -66,6 +66,19 @@ const OPENING_DEFAULTS: Record<string, OpeningDefaults> = {
   opening: { width: 1.0, height: 2.1, sill: 0 },
 };
 
+function toObject(node: Instance, floorId: string): BuildingObject {
+  const p = node.props;
+  return {
+    id: str(p, "id") ?? createId("object"),
+    floorId,
+    type: str(p, "type") ?? "object",
+    position: [num(p, "x", 0), num(p, "y", 0), num(p, "z", 0)],
+    rotation: [0, 0, num(p, "rotation", 0)],
+    scale: [num(p, "scaleX", 1), num(p, "scaleY", 1), num(p, "scaleZ", 1)],
+    assetId: str(p, "assetId"),
+  };
+}
+
 function convertFloor(node: Instance, buildingId: string, materials: Material[]): Floor {
   const p = node.props;
   const floor: Floor = {
@@ -146,6 +159,11 @@ function convertFloor(node: Instance, buildingId: string, materials: Material[])
         room.boundaryWallIds = Object.values(sides).map((s) => s.id);
 
         for (const o of flatten(child.children)) {
+          // Furniture/fixtures are commonly declared inside a room.
+          if (o.tag === TAG.furniture) {
+            floor.objects.push(toObject(o, floor.id));
+            continue;
+          }
           if (o.tag !== TAG.door && o.tag !== TAG.window && o.tag !== TAG.opening) continue;
           const type = o.tag === TAG.door ? "door" : o.tag === TAG.window ? "window" : "opening";
           const def = OPENING_DEFAULTS[type]!;
@@ -167,19 +185,9 @@ function convertFloor(node: Instance, buildingId: string, materials: Material[])
         break;
       }
 
-      case TAG.furniture: {
-        const obj: BuildingObject = {
-          id: str(child.props, "id") ?? createId("object"),
-          floorId: floor.id,
-          type: str(child.props, "type") ?? "object",
-          position: [num(child.props, "x", 0), num(child.props, "y", 0), num(child.props, "z", 0)],
-          rotation: [0, 0, num(child.props, "rotation", 0)],
-          scale: [num(child.props, "scaleX", 1), num(child.props, "scaleY", 1), num(child.props, "scaleZ", 1)],
-          assetId: str(child.props, "assetId"),
-        };
-        floor.objects.push(obj);
+      case TAG.furniture:
+        floor.objects.push(toObject(child, floor.id));
         break;
-      }
 
       default:
         // slab / roof / stairs are reserved; ignored for the MVP model.

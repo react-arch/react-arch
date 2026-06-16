@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { BuildingDocument, EntityRef } from "@react-arch/core";
+import { furnitureColor } from "@react-arch/core";
 import { build3DScene, type Scene3D } from "./scene3d.js";
 
 export interface Building3DProps {
@@ -112,6 +113,23 @@ export function Building3D(props: Building3DProps) {
                 transparent={isGlass || props.xray}
                 opacity={isGlass ? 0.4 : props.xray ? 0.3 : 1}
                 wireframe={props.wireframe}
+              />
+            </mesh>
+          );
+        })}
+
+        {scene.objects.map((o) => {
+          const sel = isSelected(o.entityId);
+          return (
+            <mesh key={o.key} position={o.position} rotation={[0, o.rotationY, 0]} castShadow receiveShadow
+              onClick={(e) => { e.stopPropagation(); props.onSelect?.({ kind: "object", id: o.entityId }); }}>
+              <boxGeometry args={o.size} />
+              <meshStandardMaterial
+                color={sel ? ACCENT : furnitureColor(o.objectType)}
+                roughness={0.7}
+                wireframe={props.wireframe}
+                transparent={props.xray}
+                opacity={props.xray ? 0.35 : 1}
               />
             </mesh>
           );

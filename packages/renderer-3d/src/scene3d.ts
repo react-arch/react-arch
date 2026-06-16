@@ -1,5 +1,5 @@
 import type { BuildingDocument } from "@react-arch/core";
-import { allFloors } from "@react-arch/core";
+import { allFloors, furnitureDims } from "@react-arch/core";
 import { bounds, wallBoxes, wallDirection, wallLength, type Vec2 } from "@react-arch/geometry";
 
 /**
@@ -35,10 +35,22 @@ export interface PanelMesh {
   size: [number, number, number];
 }
 
+export interface ObjectMesh {
+  key: string;
+  entityId: string;
+  floorId: string;
+  kind: "object";
+  objectType: string;
+  position: [number, number, number];
+  rotationY: number;
+  size: [number, number, number];
+}
+
 export interface Scene3D {
   boxes: BoxMesh[];
   slabs: SlabMesh[];
   panels: PanelMesh[];
+  objects: ObjectMesh[];
   center: [number, number, number];
   radius: number;
 }
@@ -60,6 +72,7 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
   const boxes: BoxMesh[] = [];
   const slabs: SlabMesh[] = [];
   const panels: PanelMesh[] = [];
+  const objects: ObjectMesh[] = [];
   const allPts: Vec2[] = [];
   let minY = Infinity;
   let maxY = -Infinity;
@@ -126,6 +139,20 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
       });
     }
 
+    for (const ob of floor.objects) {
+      const d = furnitureDims(ob.type, ob.scale);
+      objects.push({
+        key: ob.id,
+        entityId: ob.id,
+        floorId: floor.id,
+        kind: "object",
+        objectType: ob.type,
+        position: [ob.position[0], elevation + ob.position[2] + d.height / 2, ob.position[1]],
+        rotationY: -ob.rotation[2],
+        size: [d.width, d.height, d.depth],
+      });
+    }
+
     if (opts.showSlabs !== false && floor.walls.length > 0) {
       const b = bounds(floor.walls.flatMap((w) => [w.start, w.end]));
       slabs.push({
@@ -144,5 +171,5 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
   const cz = (b.min[1] + b.max[1]) / 2;
   const cy = Number.isFinite(minY) ? (minY + maxY) / 2 : 1.5;
   const radius = Math.max(b.width, b.height, maxY - minY, 4) * 0.75;
-  return { boxes, slabs, panels, center: [cx, cy, cz], radius };
+  return { boxes, slabs, panels, objects, center: [cx, cy, cz], radius };
 }
