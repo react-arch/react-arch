@@ -89,7 +89,7 @@ export function buildExportScene(
 
     if (floor.walls.length > 0) {
       const b = bounds(floor.walls.flatMap((w) => [w.start, w.end]));
-      const geo = new THREE.BoxGeometry(b.width + 0.4, 0.14, b.height + 0.4);
+      const geo = new THREE.BoxGeometry(b.width + 0.2, 0.14, b.height + 0.2);
       const slab = new THREE.Mesh(geo, slabMat);
       slab.position.set((b.min[0] + b.max[0]) / 2, el - 0.07, (b.min[1] + b.max[1]) / 2);
       floorGroup.add(slab);

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, SoftShadows, ContactShadows, Environment, Lightformer } from "@react-three/drei";
 import type { BuildingDocument, EntityRef } from "@react-arch/core";
 import { furnitureColor } from "@react-arch/core";
 import { build3DScene, type Scene3D } from "./scene3d.js";
@@ -19,6 +19,13 @@ export interface Building3DProps {
 }
 
 const ACCENT = "#2563eb";
+const PALETTE = {
+  wall: "#ece7e0", // warm white plaster
+  floor: "#c4a373", // light oak
+  frame: "#262a31", // dark window/door frame
+  glass: "#cfe3f0",
+  door: "#7a5638",
+};
 
 function colorFor(doc: BuildingDocument, materialId: string | undefined, fallback: string): string {
   if (!materialId) return fallback;
@@ -32,8 +39,6 @@ function CameraRig({ scene }: { scene: Scene3D }) {
     const [cx, cy, cz] = scene.center;
     const r = scene.radius;
     camera.position.set(cx + r * 1.4, cy + r * 1.3, cz + r * 1.6);
-    // Keep the near/far range tight for good depth-buffer precision (reduces
-    // z-fighting between stacked floors that share a plane).
     camera.near = Math.max(0.05, r * 0.02);
     camera.far = r * 8 + 40;
     camera.updateProjectionMatrix();
@@ -45,6 +50,18 @@ function CameraRig({ scene }: { scene: Scene3D }) {
   return <OrbitControls ref={controls} makeDefault enableDamping />;
 }
 
+/** Procedural studio lighting (no external HDRI) for soft, realistic shading. */
+function StudioEnv() {
+  return (
+    <Environment resolution={256} frames={1}>
+      <Lightformer intensity={2.2} position={[0, 6, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[12, 12, 1]} />
+      <Lightformer intensity={1.1} position={[6, 3, 6]} rotation={[0, -Math.PI / 4, 0]} scale={[8, 8, 1]} />
+      <Lightformer intensity={0.8} position={[-6, 3, 4]} rotation={[0, Math.PI / 4, 0]} scale={[8, 8, 1]} />
+      <Lightformer intensity={0.6} position={[0, 2, -8]} scale={[10, 6, 1]} />
+    </Environment>
+  );
+}
+
 export function Building3D(props: Building3DProps) {
   const { document: doc, floorIds } = props;
   const scene = useMemo(
@@ -52,8 +69,8 @@ export function Building3D(props: Building3DProps) {
     [doc, floorIds, props.exploded, props.explodeGap, props.showSlabs],
   );
 
-  const wallColor = colorFor(doc, undefined, "#e8e6e1");
   const isSelected = (id: string) => props.selected?.id === id;
+  const wallOpacity = props.xray ? 0.18 : 1;
 
   return (
     <div className={props.className} style={{ width: "100%", height: "100%", background: "#0f1115" }}>
@@ -62,30 +79,49 @@ export function Building3D(props: Building3DProps) {
         dpr={[1, 2]}
         camera={{ position: [12, 10, 14], fov: 45 }}
         gl={{ antialias: true }}
+        onCreated={({ gl }) => {
+          gl.toneMappingExposure = 1.05;
+        }}
         onPointerMissed={() => props.onSelect?.(null)}
       >
         <color attach="background" args={["#0f1115"]} />
-        <hemisphereLight intensity={0.55} groundColor="#1a1c22" />
+
+        <SoftShadows size={28} samples={16} focus={0.7} />
+        <StudioEnv />
         <ambientLight intensity={0.35} />
+        <hemisphereLight intensity={0.3} groundColor="#20222a" />
         <directionalLight
-          position={[scene.center[0] + 20, scene.center[1] + 35, scene.center[2] + 15]}
-          intensity={1.1}
+          position={[scene.center[0] + 14, scene.center[1] + 26, scene.center[2] + 12]}
+          intensity={2.1}
           castShadow
           shadow-mapSize={[2048, 2048]}
-        />
+          shadow-bias={-0.0002}
+          shadow-normalBias={0.02}
+        >
+          <orthographicCamera attach="shadow-camera" args={[-30, 30, 30, -30, 0.1, 120]} />
+        </directionalLight>
+        <directionalLight position={[scene.center[0] - 12, scene.center[1] + 10, scene.center[2] - 10]} intensity={0.4} />
 
-        {/* Ground reference grid */}
-        <gridHelper args={[200, 200, "#2a2d35", "#1c1e24"]} position={[scene.center[0], -0.01, scene.center[2]]} />
+        {/* Soft grounded shadow under the building */}
+        <ContactShadows
+          position={[scene.center[0], scene.floorY - 0.02, scene.center[2]]}
+          scale={scene.radius * 3.2}
+          resolution={1024}
+          blur={2.2}
+          opacity={0.5}
+          far={scene.radius * 2}
+          frames={1}
+        />
 
         {scene.slabs.map((s) => (
           <mesh key={s.key} position={s.position} receiveShadow
             onClick={(e) => { e.stopPropagation(); props.onSelect?.({ kind: "floor", id: s.floorId }); }}>
             <boxGeometry args={s.size} />
-            {/* polygonOffset pushes the slab slightly back in depth so it never
-                ties with a coplanar wall-top from the floor below. */}
             <meshStandardMaterial
-              color={isSelected(s.floorId) ? ACCENT : "#3a3d44"}
-              roughness={0.95}
+              color={isSelected(s.floorId) ? ACCENT : PALETTE.floor}
+              roughness={0.72}
+              metalness={0}
+              envMapIntensity={0.5}
               polygonOffset
               polygonOffsetFactor={1}
               polygonOffsetUnits={1}
@@ -100,11 +136,13 @@ export function Building3D(props: Building3DProps) {
               onClick={(e) => { e.stopPropagation(); props.onSelect?.({ kind: "wall", id: b.entityId }); }}>
               <boxGeometry args={b.size} />
               <meshStandardMaterial
-                color={sel ? ACCENT : colorFor(doc, b.materialId, wallColor)}
-                roughness={0.9}
+                color={sel ? ACCENT : colorFor(doc, b.materialId, PALETTE.wall)}
+                roughness={0.95}
+                metalness={0}
+                envMapIntensity={0.4}
                 wireframe={props.wireframe}
                 transparent={props.xray}
-                opacity={props.xray ? 0.25 : 1}
+                opacity={wallOpacity}
               />
             </mesh>
           );
@@ -113,19 +151,29 @@ export function Building3D(props: Building3DProps) {
         {scene.panels.map((p) => {
           const sel = isSelected(p.entityId);
           const isGlass = p.kind === "window";
+          const [w, h, d] = p.size;
           return (
-            <mesh key={p.key} position={p.position} rotation={[0, p.rotationY, 0]} castShadow
+            <group key={p.key} position={p.position} rotation={[0, p.rotationY, 0]}
               onClick={(e) => { e.stopPropagation(); props.onSelect?.({ kind: "opening", id: p.entityId }); }}>
-              <boxGeometry args={p.size} />
-              <meshStandardMaterial
-                color={sel ? ACCENT : isGlass ? "#bcd6e6" : "#6b4b2f"}
-                roughness={isGlass ? 0.05 : 0.6}
-                metalness={isGlass ? 0.1 : 0}
-                transparent={isGlass || props.xray}
-                opacity={isGlass ? 0.4 : props.xray ? 0.3 : 1}
-                wireframe={props.wireframe}
-              />
-            </mesh>
+              {/* frame */}
+              <mesh castShadow>
+                <boxGeometry args={[w, h, d]} />
+                <meshStandardMaterial color={sel ? ACCENT : PALETTE.frame} roughness={0.5} metalness={0.25} wireframe={props.wireframe} />
+              </mesh>
+              {/* glass / door panel inset within the frame */}
+              <mesh>
+                <boxGeometry args={[w * 0.84, h * 0.84, isGlass ? d * 1.6 : d * 0.5]} />
+                <meshStandardMaterial
+                  color={sel ? ACCENT : isGlass ? PALETTE.glass : PALETTE.door}
+                  roughness={isGlass ? 0.05 : 0.6}
+                  metalness={isGlass ? 0.2 : 0}
+                  envMapIntensity={isGlass ? 1.4 : 0.4}
+                  transparent={isGlass || props.xray}
+                  opacity={isGlass ? 0.32 : props.xray ? 0.3 : 1}
+                  wireframe={props.wireframe}
+                />
+              </mesh>
+            </group>
           );
         })}
 
@@ -137,10 +185,12 @@ export function Building3D(props: Building3DProps) {
               <boxGeometry args={o.size} />
               <meshStandardMaterial
                 color={sel ? ACCENT : furnitureColor(o.objectType)}
-                roughness={0.7}
+                roughness={0.6}
+                metalness={0}
+                envMapIntensity={0.5}
                 wireframe={props.wireframe}
                 transparent={props.xray}
-                opacity={props.xray ? 0.35 : 1}
+                opacity={props.xray ? 0.4 : 1}
               />
             </mesh>
           );

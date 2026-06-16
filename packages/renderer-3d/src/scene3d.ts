@@ -53,6 +53,8 @@ export interface Scene3D {
   objects: ObjectMesh[];
   center: [number, number, number];
   radius: number;
+  /** Y of the lowest floor — used to ground contact shadows. */
+  floorY: number;
 }
 
 export interface Build3DOptions {
@@ -184,7 +186,9 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
         // coplanar with the tops of the walls of the floor below (which reach
         // exactly this elevation) — the root cause of the z-fighting seam.
         position: [(b.min[0] + b.max[0]) / 2, elevation - SLAB_TOP_GAP - SLAB_THICKNESS / 2, (b.min[1] + b.max[1]) / 2],
-        size: [b.width + 0.4, SLAB_THICKNESS, b.height + 0.4],
+        // Extend to the outer wall face (~half a wall thickness), so the floor
+        // sits flush with the walls instead of overhanging as a ledge.
+        size: [b.width + 0.2, SLAB_THICKNESS, b.height + 0.2],
       });
     }
   });
@@ -194,5 +198,5 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
   const cz = (b.min[1] + b.max[1]) / 2;
   const cy = Number.isFinite(minY) ? (minY + maxY) / 2 : 1.5;
   const radius = Math.max(b.width, b.height, maxY - minY, 4) * 0.75;
-  return { boxes, slabs, panels, objects, center: [cx, cy, cz], radius };
+  return { boxes, slabs, panels, objects, center: [cx, cy, cz], radius, floorY: Number.isFinite(minY) ? minY : 0 };
 }
