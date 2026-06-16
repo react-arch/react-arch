@@ -105,7 +105,8 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
         height: o.height,
         sillHeight: o.sillHeight,
       }));
-      const segs = wallBoxes(wall, wallOpenings, wall.height);
+      // Extend each end by half-thickness so walls overlap and fill corners.
+      const segs = wallBoxes(wall, wallOpenings, wall.height, wall.thickness / 2);
       segs.forEach((s, i) => {
         const along = (s.along0 + s.along1) / 2;
         const px = wall.start[0] + dir[0] * along;

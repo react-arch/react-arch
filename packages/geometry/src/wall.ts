@@ -19,17 +19,20 @@ export function wallDirection(wall: WallLike): Vec2 {
  * Generate the visible quad polygon of a wall from its centerline and
  * thickness. Vertices are ordered counter-clockwise.
  */
-export function wallPolygon(wall: WallLike): Vec2[] {
+export function wallPolygon(wall: WallLike, extendEnds = 0): Vec2[] {
   const dir = wallDirection(wall);
   const n = normal(dir);
   const half = wall.thickness / 2;
   const offset = scale(n, half);
   const negOffset = scale(n, -half);
+  // Push the ends out along the wall direction so corners overlap (no notch).
+  const start = add(wall.start, scale(dir, -extendEnds));
+  const end = add(wall.end, scale(dir, extendEnds));
   return [
-    add(wall.start, negOffset),
-    add(wall.end, negOffset),
-    add(wall.end, offset),
-    add(wall.start, offset),
+    add(start, negOffset),
+    add(end, negOffset),
+    add(end, offset),
+    add(start, offset),
   ];
 }
 
@@ -95,10 +98,18 @@ export function wallBoxes(
   wall: WallLike,
   openings: WallOpeningInput[],
   wallHeight: number,
+  /**
+   * Extend the solid wall by this much past each end. Pass `thickness / 2` so
+   * walls meeting at a corner overlap and fill the corner square — otherwise
+   * each centerline box stops short and leaves a notch.
+   */
+  extendEnds = 0,
 ): WallBox[] {
   const len = wallLength(wall);
+  const lo = -extendEnds;
+  const hi = len + extendEnds;
   if (openings.length === 0) {
-    return [{ along0: 0, along1: len, z0: 0, z1: wallHeight }];
+    return [{ along0: lo, along1: hi, z0: 0, z1: wallHeight }];
   }
   const sorted = [...openings]
     .map((o) => ({
@@ -110,7 +121,7 @@ export function wallBoxes(
     .sort((a, b) => a.a0 - b.a0);
 
   const boxes: WallBox[] = [];
-  let cursor = 0;
+  let cursor = lo;
   for (const o of sorted) {
     if (o.a0 > cursor) {
       boxes.push({ along0: cursor, along1: o.a0, z0: 0, z1: wallHeight });
@@ -125,8 +136,8 @@ export function wallBoxes(
     }
     cursor = Math.max(cursor, o.a1);
   }
-  if (cursor < len) {
-    boxes.push({ along0: cursor, along1: len, z0: 0, z1: wallHeight });
+  if (cursor < hi) {
+    boxes.push({ along0: cursor, along1: hi, z0: 0, z1: wallHeight });
   }
   return boxes;
 }
