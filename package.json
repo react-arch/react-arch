@@ -34,6 +34,10 @@
     "onlyBuiltDependencies": [
       "esbuild",
       "sharp"
-    ]
+    ],
+    "overrides": {
+      "@react-three/fiber>@types/react": "^18.3.12",
+      "@react-three/drei>@types/react": "^18.3.12"
+    }
   }
 }

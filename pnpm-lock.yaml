@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@react-three/fiber>@types/react': ^18.3.12
+  '@react-three/drei>@types/react': ^18.3.12
+
 importers:
 
   .:
@@ -328,6 +332,9 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@25.9.3)(lightningcss@1.32.0)
 
   packages/renderer-3d:
     dependencies:
@@ -362,6 +369,9 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@25.9.3)(lightningcss@1.32.0)
 
   packages/shared:
     devDependencies:
