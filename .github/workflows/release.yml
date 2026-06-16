@@ -42,7 +42,8 @@ jobs:
       - name: Create release PR or publish
         uses: changesets/action@v1
         with:
-          version: pnpm version
+          # `pnpm run version` (not `pnpm version`, which is pnpm's built-in).
+          version: pnpm run version
           publish: pnpm ci:publish
           commit: "chore: version packages"
           title: "chore: version packages"
