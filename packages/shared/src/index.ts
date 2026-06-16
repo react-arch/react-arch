@@ -44,10 +44,17 @@ export type Severity = "error" | "warning" | "info";
 
 export interface Diagnostic {
   severity: Severity;
+  /** Stable machine-readable code, e.g. "room-too-small". */
   code: string;
   message: string;
+  /** Actionable hint for an agent or human to fix the issue. */
+  fix?: string;
   entityId?: string;
+  /** Kind of the offending entity, e.g. "room" | "wall" | "opening" | "floor". */
+  entityKind?: string;
   path?: string[];
+  /** Structured payload, e.g. { areaM2: 3.1, minM2: 5 }. */
+  data?: Record<string, unknown>;
 }
 
 export type DeepReadonly<T> = T extends (infer R)[]

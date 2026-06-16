@@ -1,0 +1,81 @@
+---
+title: For Agents
+description: Validate AI-generated buildings — machine-readable diagnostics, a design brief, and the check CLI loop.
+---
+
+React Arch is built for **architecture-as-code written by agents**: the agent
+writes a building component, React Arch validates it, and returns precise,
+machine-readable feedback the agent can act on.
+
+## The loop
+
+```bash
+react-arch check src/House.tsx --out out --svg --brief brief.json
+```
+
+`check` renders the building to the semantic model, runs validation + quality
+checks (+ optional design brief), writes artifacts, and **exits non-zero when
+there are errors** — so agents and CI can gate on it.
+
+It writes to `--out`:
+
+- `<name>.report.json` — the full machine-readable review (below)
+- `<name>.model.json` — the canonical model
+- `<name>.plan.svg` — a scaled 2D plan (with `--svg`)
+- `report.json` — combined report for all buildings
+
+## Diagnostics
+
+Every diagnostic has a stable `code`, a human/agent `fix` hint, and structured
+`data`:
+
+```json
+{
+  "severity": "warning",
+  "code": "room-too-small",
+  "entityKind": "room",
+  "entityId": "bath",
+  "message": "Bathroom is 3.1 m² (min ~3 m² for a bathroom)",
+  "fix": "Enlarge to at least 3 m².",
+  "data": { "areaM2": 3.1, "minM2": 3, "category": "bathroom" }
+}
+```
+
+Codes include: `opening-overlap`, `door-too-narrow`, `room-too-small`,
+`room-no-egress`, `low-daylight`, `corridor-too-narrow`, `overlapping-rooms`,
+`unknown-material`, plus structural (`duplicate-id`, `bad-wall-ref`, …) and brief
+(`brief-missing-room`, `brief-room-too-small`, `brief-adjacency-missing`,
+`brief-floor-count`).
+
+## Design brief
+
+Agents can target a structured `DesignBrief`, and `check --brief` reports what's
+missing:
+
+```json title="brief.json"
+{
+  "floors": 2,
+  "rooms": [
+    { "type": "kitchen", "minAreaM2": 8 },
+    { "type": "bedroom", "count": 2 },
+    { "type": "bathroom" }
+  ],
+  "adjacencies": [{ "a": "kitchen", "b": "living" }]
+}
+```
+
+## Programmatic API
+
+The same checks are available from `@react-arch/validation`:
+
+```ts
+import { renderToDocument } from "@react-arch/react";
+import { review } from "@react-arch/validation";
+
+const doc = renderToDocument(<House />);
+const report = review(doc, { brief });
+// report.ok, report.counts, report.diagnostics, report.schedule
+```
+
+`review()` returns structural + quality + brief diagnostics, an area schedule,
+and a summary — the building block of the agent feedback loop.

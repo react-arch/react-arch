@@ -8,6 +8,7 @@
     "components",
     "renderers",
     "exporting",
+    "agents",
     "cli"
   ]
 }

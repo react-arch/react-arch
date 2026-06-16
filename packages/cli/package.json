@@ -8,10 +8,16 @@
     "react-arch": "bin/react-arch.mjs"
   },
   "files": [
-    "bin"
+    "bin",
+    "check.mjs"
   ],
   "dependencies": {
-    "@react-arch/studio-app": "workspace:*"
+    "@react-arch/studio-app": "workspace:*",
+    "@react-arch/react": "workspace:*",
+    "@react-arch/validation": "workspace:*",
+    "@react-arch/exporters": "workspace:*",
+    "esbuild": "^0.24.0",
+    "react": "^18.3.1"
   },
   "keywords": [
     "react-arch",
