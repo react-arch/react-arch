@@ -117,7 +117,18 @@ export function Group(props: WithChildren<{ id?: string }>) {
 export function Slab(props: WithChildren<{ id?: string }>) {
   return h(TAG.slab, props);
 }
-export function Roof(props: WithChildren<{ id?: string; type?: string }>) {
+export interface RoofProps {
+  id?: string;
+  type?: "flat" | "gable" | "hip";
+  /** Pitch in degrees for gable/hip (default 30). */
+  pitch?: number;
+  /** Eave overhang in metres (default 0.3). */
+  overhang?: number;
+  /** Slab thickness for flat roofs (default 0.3). */
+  thickness?: number;
+  materialId?: string;
+}
+export function Roof(props: RoofProps) {
   return h(TAG.roof, props);
 }
 export function Stairs(props: WithChildren<{ id?: string }>) {

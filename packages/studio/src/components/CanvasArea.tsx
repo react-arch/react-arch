@@ -31,6 +31,7 @@ export function CanvasArea({ doc }: { doc: BuildingDocument }) {
       exploded={view.exploded}
       wireframe={s.wireframe}
       xray={s.xray}
+      showRoof={s.showRoof}
     />
   );
 

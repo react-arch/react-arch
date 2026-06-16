@@ -1,4 +1,4 @@
-import { Box, Boxes, Braces, Columns2, Eye, Grid3x3, Ruler, SquareDashed, Square } from "lucide-react";
+import { Box, Boxes, Braces, Columns2, Eye, Grid3x3, Home, Ruler, SquareDashed, Square } from "lucide-react";
 import { allFloors, type BuildingDocument } from "@react-arch/core";
 import { useStudio, type FloorDisplay, type ViewMode } from "../store.js";
 
@@ -101,6 +101,11 @@ export function CanvasControls({ doc }: { doc: BuildingDocument }) {
               {is3D && (
                 <Toggle active={s.xray} onClick={() => s.toggle("xray")} title="X-ray">
                   <Eye size={14} />
+                </Toggle>
+              )}
+              {is3D && (
+                <Toggle active={s.showRoof} onClick={() => s.toggle("showRoof")} title="Roof">
+                  <Home size={14} />
                 </Toggle>
               )}
             </div>

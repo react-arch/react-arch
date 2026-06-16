@@ -72,10 +72,26 @@ export interface Floor {
   objects: BuildingObject[];
 }
 
+export type RoofKind = "flat" | "gable" | "hip";
+
+export interface Roof {
+  id: string;
+  buildingId: string;
+  type: RoofKind;
+  /** Pitch in degrees for gable/hip (default 30). */
+  pitch?: number;
+  /** Eave overhang in metres (default 0.3). */
+  overhang?: number;
+  /** Parapet/slab thickness for flat roofs in metres (default 0.3). */
+  thickness?: number;
+  materialId?: string;
+}
+
 export interface Building {
   id: string;
   name: string;
   floors: Floor[];
+  roofs?: Roof[];
 }
 
 export type MaterialCategory =

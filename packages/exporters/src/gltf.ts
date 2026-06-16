@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import { allFloors, furnitureColor, furnitureDims, type BuildingDocument } from "@react-arch/core";
-import { bounds, wallBoxes, wallDirection } from "@react-arch/geometry";
+import { bounds, roofGeometry, wallBoxes, wallDirection } from "@react-arch/geometry";
 
 export interface GltfExportOptions {
   floorIds?: string[] | "all";
@@ -97,6 +97,36 @@ export function buildExportScene(
 
     root.add(floorGroup);
   }
+
+  // Roofs sit over each building's top visible floor.
+  for (const building of doc.buildings) {
+    if (!building.roofs?.length) continue;
+    const bFloors = building.floors.filter((f) => (floorIds === "all" ? f.visible : floorIds.includes(f.id)));
+    const wallPts = bFloors.flatMap((f) => f.walls.flatMap((w) => [w.start, w.end]));
+    if (wallPts.length === 0) continue;
+    const fb = bounds(wallPts);
+    const topY = Math.max(...bFloors.map((f) => f.elevation + f.height));
+    for (const roof of building.roofs) {
+      const g = roofGeometry(
+        { min: fb.min, max: fb.max },
+        { type: roof.type, baseY: topY, pitch: roof.pitch, overhang: roof.overhang, thickness: roof.thickness },
+      );
+      const mat = matFor(colorFor(roof.materialId, "#474b54"), { roughness: 0.85, side: THREE.DoubleSide });
+      let mesh: THREE.Mesh;
+      if (g.kind === "box") {
+        mesh = new THREE.Mesh(new THREE.BoxGeometry(...g.size), mat);
+        mesh.position.set(...g.position);
+      } else {
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.Float32BufferAttribute(g.positions, 3));
+        geo.computeVertexNormals();
+        mesh = new THREE.Mesh(geo, mat);
+      }
+      mesh.name = roof.id;
+      root.add(mesh);
+    }
+  }
+
   return root;
 }
 

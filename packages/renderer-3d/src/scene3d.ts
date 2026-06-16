@@ -1,6 +1,6 @@
 import type { BuildingDocument } from "@react-arch/core";
 import { allFloors, furnitureDims } from "@react-arch/core";
-import { bounds, wallBoxes, wallDirection, type Vec2 } from "@react-arch/geometry";
+import { bounds, roofGeometry, wallBoxes, wallDirection, type RoofGeometry, type Vec2 } from "@react-arch/geometry";
 
 /**
  * Plan→world mapping: plan X → world X, plan Y → world Z, height → world Y.
@@ -46,11 +46,21 @@ export interface ObjectMesh {
   size: [number, number, number];
 }
 
+export interface RoofMesh {
+  key: string;
+  entityId: string;
+  buildingId: string;
+  kind: "roof";
+  geometry: RoofGeometry;
+  materialId?: string;
+}
+
 export interface Scene3D {
   boxes: BoxMesh[];
   slabs: SlabMesh[];
   panels: PanelMesh[];
   objects: ObjectMesh[];
+  roofs: RoofMesh[];
   center: [number, number, number];
   radius: number;
   /** Y of the lowest floor — used to ground contact shadows. */
@@ -78,6 +88,7 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
   const slabs: SlabMesh[] = [];
   const panels: PanelMesh[] = [];
   const objects: ObjectMesh[] = [];
+  const roofs: RoofMesh[] = [];
   const allPts: Vec2[] = [];
   let minY = Infinity;
   let maxY = -Infinity;
@@ -193,10 +204,36 @@ export function build3DScene(doc: BuildingDocument, opts: Build3DOptions): Scene
     }
   });
 
+  // Roofs sit over each building's top visible floor.
+  for (const building of doc.buildings) {
+    if (!building.roofs?.length) continue;
+    const bFloors = building.floors.filter((f) =>
+      opts.floorIds === "all" ? f.visible : opts.floorIds.includes(f.id),
+    );
+    const wallPts = bFloors.flatMap((f) => f.walls.flatMap((w) => [w.start, w.end]));
+    if (wallPts.length === 0) continue;
+    const fb = bounds(wallPts);
+    let topY = -Infinity;
+    for (const f of bFloors) {
+      const idx = ordered.indexOf(f);
+      const eff = f.elevation + (opts.exploded ? idx * gap : 0);
+      topY = Math.max(topY, eff + f.height);
+    }
+    for (const roof of building.roofs) {
+      const geometry = roofGeometry(
+        { min: fb.min, max: fb.max },
+        { type: roof.type, baseY: topY, pitch: roof.pitch, overhang: roof.overhang, thickness: roof.thickness },
+      );
+      roofs.push({ key: `roof-${roof.id}`, entityId: roof.id, buildingId: building.id, kind: "roof", geometry, materialId: roof.materialId });
+      if (geometry.kind === "box") maxY = Math.max(maxY, geometry.position[1] + geometry.size[1] / 2);
+      else for (let i = 1; i < geometry.positions.length; i += 3) maxY = Math.max(maxY, geometry.positions[i]!);
+    }
+  }
+
   const b = bounds(allPts);
   const cx = (b.min[0] + b.max[0]) / 2;
   const cz = (b.min[1] + b.max[1]) / 2;
   const cy = Number.isFinite(minY) ? (minY + maxY) / 2 : 1.5;
   const radius = Math.max(b.width, b.height, maxY - minY, 4) * 0.75;
-  return { boxes, slabs, panels, objects, center: [cx, cy, cz], radius, floorY: Number.isFinite(minY) ? minY : 0 };
+  return { boxes, slabs, panels, objects, roofs, center: [cx, cy, cz], radius, floorY: Number.isFinite(minY) ? minY : 0 };
 }

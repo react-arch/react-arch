@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, SoftShadows, ContactShadows, Environment, Lightformer } from "@react-three/drei";
 import type { BuildingDocument, EntityRef } from "@react-arch/core";
@@ -15,6 +16,8 @@ export interface Building3DProps {
   wireframe?: boolean;
   xray?: boolean;
   showSlabs?: boolean;
+  /** Render roofs (hidden by default so interiors stay visible). */
+  showRoof?: boolean;
   className?: string;
 }
 
@@ -71,6 +74,19 @@ export function Building3D(props: Building3DProps) {
 
   const isSelected = (id: string) => props.selected?.id === id;
   const wallOpacity = props.xray ? 0.18 : 1;
+
+  // Pre-build Three.js geometries for sloped roofs.
+  const roofGeos = useMemo(
+    () =>
+      scene.roofs.map((r) => {
+        if (r.geometry.kind !== "mesh") return null;
+        const g = new THREE.BufferGeometry();
+        g.setAttribute("position", new THREE.Float32BufferAttribute(r.geometry.positions, 3));
+        g.computeVertexNormals();
+        return g;
+      }),
+    [scene.roofs],
+  );
 
   return (
     <div className={props.className} style={{ width: "100%", height: "100%", background: "#0f1115" }}>
@@ -209,6 +225,25 @@ export function Building3D(props: Building3DProps) {
             </mesh>
           );
         })}
+
+        {props.showRoof &&
+          scene.roofs.map((r, i) => {
+            const color = colorFor(doc, r.materialId, "#474b54");
+            if (r.geometry.kind === "box") {
+              return (
+                <mesh key={r.key} position={r.geometry.position} castShadow receiveShadow>
+                  <boxGeometry args={r.geometry.size} />
+                  <meshStandardMaterial color={color} roughness={0.85} wireframe={props.wireframe} />
+                </mesh>
+              );
+            }
+            const geo = roofGeos[i];
+            return geo ? (
+              <mesh key={r.key} geometry={geo} castShadow receiveShadow>
+                <meshStandardMaterial color={color} roughness={0.85} side={THREE.DoubleSide} wireframe={props.wireframe} />
+              </mesh>
+            ) : null;
+          })}
 
         <CameraRig scene={scene} />
       </Canvas>

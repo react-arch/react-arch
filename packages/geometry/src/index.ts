@@ -11,3 +11,4 @@ export * from "./line.js";
 export * from "./polygon.js";
 export * from "./wall.js";
 export * from "./snap.js";
+export * from "./roof.js";

@@ -10,6 +10,8 @@ import {
   type Material,
   type Opening,
   type Room,
+  type Roof,
+  type RoofKind,
   type Wall,
 } from "@react-arch/core";
 import { TAG, type RoomSide } from "./tags.js";
@@ -101,6 +103,20 @@ function toObject(node: Instance, floorId: string, fallbackId: string, usedIds: 
     rotation: [0, 0, num(p, "rotation", 0)],
     scale: [num(p, "scaleX", 1), num(p, "scaleY", 1), num(p, "scaleZ", 1)],
     assetId: str(p, "assetId"),
+  };
+}
+
+function toRoof(node: Instance, buildingId: string, index: number, usedIds: Set<string>): Roof {
+  const p = node.props;
+  const type = (str(p, "type") as RoofKind) ?? "gable";
+  return {
+    id: idFromProps(p, `${buildingId}-roof-${index + 1}`, usedIds),
+    buildingId,
+    type: type === "flat" || type === "gable" || type === "hip" ? type : "gable",
+    pitch: typeof p.pitch === "number" ? p.pitch : undefined,
+    overhang: typeof p.overhang === "number" ? p.overhang : undefined,
+    thickness: typeof p.thickness === "number" ? p.thickness : undefined,
+    materialId: str(p, "materialId"),
   };
 }
 
@@ -412,7 +428,12 @@ export function convert(instances: Instance[], fallbackName = "Untitled"): Build
       .map((fn, floorIndex) => convertFloor(fn, buildingId, materials, floorIndex, usedIds));
     // Keep floors ordered by elevation for stable stacking.
     floors.sort((a, b) => a.elevation - b.elevation);
-    buildings.push({ id: buildingId, name, floors });
+
+    const roofs = flatten(bn.children)
+      .filter((c) => c.tag === TAG.roof)
+      .map((rn, i) => toRoof(rn, buildingId, i, usedIds));
+
+    buildings.push({ id: buildingId, name, floors, ...(roofs.length ? { roofs } : {}) });
   });
 
   return {

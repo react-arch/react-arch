@@ -3,6 +3,7 @@ import { polygonArea, polygonCentroid } from "./polygon.js";
 import { openingFits, openingSpan, wallLength, wallPolygon } from "./wall.js";
 import { segmentIntersection } from "./line.js";
 import { findSnap, snapToGrid } from "./snap.js";
+import { roofGeometry } from "./roof.js";
 
 describe("polygon", () => {
   it("computes the area of a unit square", () => {
@@ -70,5 +71,37 @@ describe("snap", () => {
       tolerance: 0.2,
     });
     expect(snap?.kind).toBe("endpoint");
+  });
+});
+
+describe("roof", () => {
+  const fp = { min: [0, 0] as [number, number], max: [10, 6] as [number, number] };
+
+  it("flat roof is a box slab above the eave with overhang", () => {
+    const g = roofGeometry(fp, { type: "flat", baseY: 3, overhang: 0.5, thickness: 0.2 });
+    expect(g.kind).toBe("box");
+    if (g.kind !== "box") throw new Error("expected box");
+    expect(g.size).toEqual([11, 0.2, 7]);
+    expect(g.position[1]).toBeCloseTo(3.1);
+  });
+
+  it("gable roof returns sloped triangle vertices ridged along the long axis", () => {
+    const g = roofGeometry(fp, { type: "gable", baseY: 3, pitch: 45, overhang: 0 });
+    expect(g.kind).toBe("mesh");
+    if (g.kind !== "mesh") throw new Error("expected mesh");
+    // ridge height = baseY + tan(45) * (D/2) = 3 + 3 = 6
+    const ys = g.positions.filter((_, i) => i % 3 === 1);
+    expect(Math.max(...ys)).toBeCloseTo(6);
+    expect(Math.min(...ys)).toBeCloseTo(3);
+  });
+
+  it("hip roof insets the ridge from both ends", () => {
+    const g = roofGeometry(fp, { type: "hip", baseY: 0, pitch: 30, overhang: 0 });
+    if (g.kind !== "mesh") throw new Error("expected mesh");
+    const xs = g.positions.filter((_, i) => i % 3 === 0);
+    // ridge x is inset by D/2 = 3 → between 3 and 7
+    expect(Math.max(...xs)).toBeCloseTo(10);
+    const ridgeXs = [...new Set(xs)].filter((x) => x > 0.001 && x < 9.999);
+    expect(ridgeXs.some((x) => Math.abs(x - 3) < 1e-6 || Math.abs(x - 7) < 1e-6)).toBe(true);
   });
 });

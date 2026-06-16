@@ -1,4 +1,4 @@
-import { Building, Door, Floor, Room, Window, Fixture } from "@react-arch/react";
+import { Building, Door, Floor, Roof, Room, Window, Fixture } from "@react-arch/react";
 
 /**
  * A deeper, two-storey family house on a 12 × 9 m footprint with a central
@@ -94,6 +94,8 @@ export function FamilyHouse() {
           <Fixture type="chair" x={9.5} y={6.4} />
         </Room>
       </Floor>
+
+      <Roof type="hip" pitch={35} overhang={0.4} />
     </Building>
   );
 }

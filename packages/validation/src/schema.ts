@@ -67,10 +67,21 @@ export const FloorSchema = z.object({
   objects: z.array(BuildingObjectSchema),
 });
 
+export const RoofSchema = z.object({
+  id: z.string().min(1),
+  buildingId: z.string().min(1),
+  type: z.enum(["flat", "gable", "hip"]),
+  pitch: z.number().optional(),
+  overhang: z.number().optional(),
+  thickness: z.number().optional(),
+  materialId: z.string().optional(),
+});
+
 export const BuildingSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
   floors: z.array(FloorSchema),
+  roofs: z.array(RoofSchema).optional(),
 });
 
 export const MaterialSchema = z.object({

@@ -30,7 +30,8 @@ interface StudioState {
   showMeasurements: boolean;
   wireframe: boolean;
   xray: boolean;
-  toggle: (key: "showGrid" | "showMeasurements" | "wireframe" | "xray") => void;
+  showRoof: boolean;
+  toggle: (key: "showGrid" | "showMeasurements" | "wireframe" | "xray" | "showRoof") => void;
 }
 
 export const useStudio = create<StudioState>((set) => ({
@@ -63,5 +64,6 @@ export const useStudio = create<StudioState>((set) => ({
   showMeasurements: true,
   wireframe: false,
   xray: false,
+  showRoof: false,
   toggle: (key) => set((s) => ({ [key]: !s[key] }) as Partial<StudioState>),
 }));
