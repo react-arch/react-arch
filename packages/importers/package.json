@@ -11,7 +11,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
-    "lint": "oxlint src"
+    "lint": "oxlint src",
+    "build": "tsdown"
   },
   "dependencies": {
     "@react-arch/core": "workspace:*",
@@ -20,5 +21,26 @@
   "devDependencies": {
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
-  }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/react-arch/react-arch.git",
+    "directory": "packages/importers"
+  },
+  "license": "MIT"
 }
