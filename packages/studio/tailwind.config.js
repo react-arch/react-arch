@@ -1,18 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: "class",
-  content: [
-    "./index.html",
-    "./src/**/*.{ts,tsx}",
-    // Scan the shared Studio component package so its utilities are generated.
-    "../../packages/studio/src/**/*.{ts,tsx}",
-  ],
+  content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
+        // Dark professional surfaces (CAD-style)…
         panel: "#15171c",
         panel2: "#1a1d23",
         edge: "#262a32",
+        // …with the React Arch brand accent.
         accent: "#2563eb",
         "accent-soft": "#93b5ff",
       },

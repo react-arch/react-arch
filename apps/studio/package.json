@@ -1,5 +1,5 @@
 {
-  "name": "@react-arch/studio",
+  "name": "@react-arch/studio-app",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,6 +11,7 @@
     "lint": "oxlint src"
   },
   "dependencies": {
+    "@react-arch/studio": "workspace:*",
     "@react-arch/core": "workspace:*",
     "@react-arch/examples": "workspace:*",
     "@react-arch/exporters": "workspace:*",

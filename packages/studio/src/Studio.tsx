@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore, type ComponentType } from "react";
 import {
   getCompositions,
   getCompositionsVersion,
   renderComposition,
   subscribeCompositions,
+  type BuildingComposition,
 } from "@react-arch/react";
-// The building registry root. In-repo this resolves to the bundled examples;
-// the `react-arch studio` CLI aliases it to the user's project entry.
-import Root from "virtual:react-arch-root";
 import { createEmptyDocument, type BuildingDocument } from "@react-arch/core";
 import { validateDocument, type Diagnostic } from "@react-arch/validation";
 import { useStudio } from "./store.js";
@@ -17,12 +15,51 @@ import { Properties } from "./components/Properties.js";
 import { Diagnostics } from "./components/Diagnostics.js";
 import { CanvasArea } from "./components/CanvasArea.js";
 
-export function App() {
-  const compositions = useSyncExternalStore(subscribeCompositions, getCompositions, getCompositions);
-  const version = useSyncExternalStore(subscribeCompositions, getCompositionsVersion, getCompositionsVersion);
-  const { compositionId, setComposition } = useStudio();
+export interface StudioProps {
+  /** A registration root (renders `<Composition>` entries). Enables the building switcher. */
+  root?: ComponentType;
+  /** A single building component. */
+  component?: ComponentType<Record<string, unknown>>;
+  /** Props passed to `component`. */
+  componentProps?: Record<string, unknown>;
+  /** A pre-built document (advanced). */
+  document?: BuildingDocument;
+  className?: string;
+}
 
-  // Default to the first registered building once they appear.
+function componentName(c: ComponentType): string {
+  return (c as { displayName?: string }).displayName || c.name || "Building";
+}
+
+/**
+ * React Arch Studio — the full visualizer (building tree, properties inspector,
+ * floor navigation, 2D/3D/split/stack/JSON views, diagnostics, export). The
+ * same component powers `pnpm dev` and apps scaffolded by create-react-arch-app.
+ */
+export function Studio(props: StudioProps) {
+  const Root = props.root;
+  const usingRoot = !!Root;
+
+  // Registry-backed compositions are only relevant when a root is mounted.
+  const registry = useSyncExternalStore(subscribeCompositions, getCompositions, getCompositions);
+  const version = useSyncExternalStore(subscribeCompositions, getCompositionsVersion, getCompositionsVersion);
+
+  const compositions = useMemo<BuildingComposition[]>(() => {
+    if (usingRoot) return registry;
+    if (props.component) {
+      return [
+        {
+          id: "main",
+          name: componentName(props.component),
+          component: props.component,
+          defaultProps: props.componentProps,
+        },
+      ];
+    }
+    return [];
+  }, [usingRoot, registry, props.component, props.componentProps]);
+
+  const { compositionId, setComposition } = useStudio();
   useEffect(() => {
     if (compositions.length > 0 && (!compositionId || !compositions.some((c) => c.id === compositionId))) {
       setComposition(compositions[0]!.id);
@@ -31,11 +68,11 @@ export function App() {
 
   const comp = compositions.find((c) => c.id === compositionId) ?? compositions[0] ?? null;
 
-  // Derive the canonical model from the building component (Remotion-style).
-  // Recompute when the composition changes or on hot-reload (version bump),
-  // NOT on every hover/selection — keeps large buildings responsive.
   const { doc, renderError } = useMemo<{ doc: BuildingDocument; renderError: string | null }>(() => {
-    if (!comp) return { doc: createEmptyDocument({ name: "No building" }), renderError: null };
+    if (!comp) {
+      if (props.document) return { doc: props.document, renderError: null };
+      return { doc: createEmptyDocument({ name: "No building" }), renderError: null };
+    }
     try {
       return { doc: renderComposition(comp), renderError: null };
     } catch (err) {
@@ -45,7 +82,7 @@ export function App() {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [comp, version]);
+  }, [comp, version, props.document]);
 
   const diagnostics = useMemo<Diagnostic[]>(() => {
     const base = validateDocument(doc);
@@ -54,11 +91,12 @@ export function App() {
   }, [doc, renderError]);
 
   return (
-    <div className="h-full flex flex-col bg-[#0f1115]">
-      {/* Hidden registration root — mounting it registers the buildings. */}
-      <div style={{ display: "none" }}>
-        <Root />
-      </div>
+    <div className={`ra-studio dark flex h-full flex-col bg-[#0f1115] ${props.className ?? ""}`}>
+      {Root ? (
+        <div style={{ display: "none" }}>
+          <Root />
+        </div>
+      ) : null}
 
       <Toolbar doc={doc} compositions={compositions} />
 
@@ -67,7 +105,7 @@ export function App() {
           <Tree doc={doc} />
         </aside>
         <main className="min-h-0 relative bg-[#0f1115]">
-          {comp ? <CanvasArea doc={doc} /> : <Loading />}
+          <CanvasArea doc={doc} />
         </main>
         <aside className="border-l border-edge bg-panel min-h-0 overflow-hidden">
           <Properties doc={doc} />
@@ -77,14 +115,6 @@ export function App() {
       <div className="h-36 border-t border-edge bg-panel">
         <Diagnostics diagnostics={diagnostics} />
       </div>
-    </div>
-  );
-}
-
-function Loading() {
-  return (
-    <div className="h-full flex items-center justify-center text-zinc-500 text-sm">
-      Loading buildings…
     </div>
   );
 }

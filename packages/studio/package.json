@@ -1,0 +1,62 @@
+{
+  "name": "@react-arch/studio",
+  "version": "0.1.2",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./style.css": "./src/style.css"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsdown && tailwindcss -i src/style.css -o dist/style.css --minify",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src"
+  },
+  "dependencies": {
+    "@react-arch/core": "workspace:*",
+    "@react-arch/exporters": "workspace:*",
+    "@react-arch/geometry": "workspace:*",
+    "@react-arch/react": "workspace:*",
+    "@react-arch/renderer-2d": "workspace:*",
+    "@react-arch/renderer-3d": "workspace:*",
+    "@react-arch/validation": "workspace:*",
+    "@react-three/drei": "^9.114.0",
+    "@react-three/fiber": "^8.17.10",
+    "lucide-react": "^0.469.0",
+    "three": "^0.169.0",
+    "zustand": "^5.0.2"
+  },
+  "peerDependencies": {
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/three": "^0.169.0",
+    "react": "^18.3.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./style.css": "./dist/style.css"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/react-arch/react-arch.git",
+    "directory": "packages/studio"
+  },
+  "license": "MIT"
+}

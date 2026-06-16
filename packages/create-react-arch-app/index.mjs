@@ -2,7 +2,7 @@
 import { mkdirSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
-const VERSION = "0.1.1";
+const VERSION = "0.2.0";
 const args = process.argv.slice(2).filter((a) => !a.startsWith("-"));
 if (process.argv.includes("-v") || process.argv.includes("--version")) {
   console.log(VERSION);
@@ -41,15 +41,10 @@ const files = {
         preview: "vite preview",
       },
       dependencies: {
-        "@react-arch/core": RA,
         "@react-arch/react": RA,
-        "@react-arch/renderer-2d": RA,
-        "@react-arch/renderer-3d": RA,
-        "@react-three/drei": "^9.114.0",
-        "@react-three/fiber": "^8.17.10",
+        "@react-arch/studio": RA,
         react: "^18.3.1",
         "react-dom": "^18.3.1",
-        three: "^0.169.0",
       },
       devDependencies: {
         "@types/react": "^18.3.12",
@@ -105,59 +100,17 @@ export default defineConfig({ plugins: [react()] });
 `,
 
   "src/main.tsx": `import { createRoot } from "react-dom/client";
-import { App } from "./App.js";
-
-createRoot(document.getElementById("root")!).render(<App />);
-`,
-
-  "src/App.tsx": `import { useState } from "react";
-import { renderToDocument } from "@react-arch/react";
-import { Plan2D } from "@react-arch/renderer-2d";
-import { Building3D } from "@react-arch/renderer-3d";
+import { Studio } from "@react-arch/studio";
+import "@react-arch/studio/style.css";
 import { House } from "./House.js";
 
-/**
- * A tiny viewer for your building. Your code is the source of truth — edit
- * House.tsx and this 2D / 3D preview updates live (Vite HMR).
- */
-export function App() {
-  const [view, setView] = useState<"2d" | "3d">("2d");
-  // Derive the semantic model from the React component tree.
-  const doc = renderToDocument(<House />);
-
-  const tab = (id: "2d" | "3d", label: string) => (
-    <button
-      onClick={() => setView(id)}
-      style={{
-        padding: "4px 12px",
-        borderRadius: 6,
-        border: "1px solid #2a2e37",
-        background: view === id ? "#4c8eff" : "#1a1d23",
-        color: view === id ? "#fff" : "#9aa3b2",
-        cursor: "pointer",
-      }}
-    >
-      {label}
-    </button>
-  );
-
-  return (
-    <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: "#0f1115", color: "#d8dbe2", fontFamily: "system-ui, sans-serif" }}>
-      <header style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: "1px solid #262a32" }}>
-        <strong style={{ flex: 1 }}>{doc.name}</strong>
-        {tab("2d", "2D Plan")}
-        {tab("3d", "3D")}
-      </header>
-      <main style={{ flex: 1, minHeight: 0 }}>
-        {view === "2d" ? (
-          <Plan2D document={doc} floorIds="all" />
-        ) : (
-          <Building3D document={doc} floorIds="all" />
-        )}
-      </main>
-    </div>
-  );
-}
+// The full React Arch Studio — the same visualizer you get from \`pnpm dev\`
+// in the React Arch repo. Edit House.tsx and it updates live (Vite HMR).
+createRoot(document.getElementById("root")!).render(
+  <div style={{ position: "fixed", inset: 0 }}>
+    <Studio component={House} />
+  </div>,
+);
 `,
 
   "src/House.tsx": `import { Building, Door, Floor, Room, Window, Fixture } from "@react-arch/react";
@@ -189,13 +142,12 @@ building design with React.
 
 \`\`\`bash
 npm install
-npm run dev      # Vite dev server with a live 2D / 3D viewer
+npm run dev      # opens the full React Arch Studio for this project
 \`\`\`
 
-Edit \`src/House.tsx\` (or add floors/rooms) and the preview updates live. The
-building component renders to a semantic model via \`renderToDocument\`, which the
-\`@react-arch/renderer-2d\` and \`@react-arch/renderer-3d\` packages draw.
-\`\`\`
+Edit \`src/House.tsx\` (or add floors/rooms) and the Studio's 2D / 3D / JSON views
+update live. This is the same Studio used in the React Arch repo — the
+\`<Studio>\` component from \`@react-arch/studio\`.
 `,
 };
 

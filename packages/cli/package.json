@@ -11,7 +11,7 @@
     "bin"
   ],
   "dependencies": {
-    "@react-arch/studio": "workspace:*"
+    "@react-arch/studio-app": "workspace:*"
   },
   "keywords": [
     "react-arch",

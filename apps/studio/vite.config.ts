@@ -22,6 +22,7 @@ const alias = {
   "@react-arch/react": rel("../../packages/react/src/index.ts"),
   "@react-arch/renderer-2d": rel("../../packages/renderer-2d/src/index.ts"),
   "@react-arch/renderer-3d": rel("../../packages/renderer-3d/src/index.ts"),
+  "@react-arch/studio": rel("../../packages/studio/src/index.ts"),
   "@react-arch/exporters": rel("../../packages/exporters/src/index.ts"),
   "@react-arch/validation": rel("../../packages/validation/src/index.ts"),
   "@react-arch/importers": rel("../../packages/importers/src/index.ts"),

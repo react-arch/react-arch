@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@react-arch/studio", "@react-arch/examples", "react-arch"]
+  "ignore": ["@react-arch/studio-app", "@react-arch/examples", "react-arch"]
 }

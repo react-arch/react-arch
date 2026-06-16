@@ -18,5 +18,6 @@ builds the libraries and publishes them to npm.
 Notes:
 - All `@react-arch/*` libraries are versioned together (`fixed`).
 - `create-react-arch-app` versions independently.
-- `@react-arch/studio`, `@react-arch/examples`, and the `react-arch` CLI are
-  ignored for now (the CLI needs the Studio bundled before it can be published).
+- `@react-arch/studio-app` (the dev shell), `@react-arch/examples`, and the
+  `react-arch` CLI are ignored. The embeddable `@react-arch/studio` component
+  package publishes normally.

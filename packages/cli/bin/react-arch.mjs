@@ -75,9 +75,9 @@ if (!existsSync(entryPath)) {
 // Locate the Studio app and the Vite binary it ships with.
 let studioDir;
 try {
-  studioDir = path.dirname(require.resolve("@react-arch/studio/package.json"));
+  studioDir = path.dirname(require.resolve("@react-arch/studio-app/package.json"));
 } catch {
-  console.error("Could not resolve @react-arch/studio. Is react-arch installed correctly?");
+  console.error("Could not resolve @react-arch/studio-app. Is react-arch installed correctly?");
   process.exit(1);
 }
 // Vite ships with the Studio; use its .bin shim (rolldown-vite's exports map

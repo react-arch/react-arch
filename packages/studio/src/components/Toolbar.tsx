@@ -7,11 +7,11 @@ import {
   Download,
   Eye,
   Grid3x3,
-  Layers,
   Ruler,
   SquareDashed,
   Square,
 } from "lucide-react";
+import { Mark } from "../Mark.js";
 import type { BuildingComposition } from "@react-arch/react";
 import { allFloors, type BuildingDocument } from "@react-arch/core";
 import { exportJSON, exportSVG, exportGLTF } from "@react-arch/exporters";
@@ -70,7 +70,7 @@ export function Toolbar({
   return (
     <div className="flex items-center gap-3 px-3 h-11 border-b border-edge bg-panel select-none">
       <div className="flex items-center gap-2 pr-3 border-r border-edge">
-        <Layers size={16} className="text-accent" />
+        <Mark size={18} />
         <span className="font-semibold tracking-tight">React Arch</span>
         <span className="text-[10px] uppercase tracking-wider text-zinc-500 bg-panel2 px-1.5 py-0.5 rounded">
           Studio

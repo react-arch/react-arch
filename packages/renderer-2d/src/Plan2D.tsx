@@ -34,7 +34,7 @@ const COLORS = {
   opening: "#e8e6e1",
   door: "#5fb3c9",
   window: "#5f9bff",
-  select: "#4c8eff",
+  select: "#2563eb",
   ghost: "rgba(120,130,150,0.25)",
   dim: "#6f7787",
 };

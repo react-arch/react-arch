@@ -8,13 +8,13 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "turbo run dev --filter=@react-arch/studio",
+    "dev": "turbo run dev --filter=@react-arch/studio-app",
     "dev:all": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "studio": "pnpm --filter @react-arch/studio dev",
+    "studio": "pnpm --filter @react-arch/studio-app dev",
     "changeset": "changeset",
     "version": "changeset version",
     "build:libs": "pnpm --filter \"./packages/*\" run build",

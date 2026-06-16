@@ -39,4 +39,4 @@ jobs:
         run: pnpm build:libs
 
       - name: Build studio
-        run: pnpm --filter @react-arch/studio build
+        run: pnpm --filter @react-arch/studio-app build

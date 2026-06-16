@@ -18,7 +18,7 @@ export interface Building3DProps {
   className?: string;
 }
 
-const ACCENT = "#4c8eff";
+const ACCENT = "#2563eb";
 
 function colorFor(doc: BuildingDocument, materialId: string | undefined, fallback: string): string {
   if (!materialId) return fallback;

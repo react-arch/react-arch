@@ -3,37 +3,31 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* Self-contained studio surface so it works embedded in any app. */
+.ra-studio {
+  height: 100%;
+  background: #0f1115;
+  color: #d8dbe2;
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
   color-scheme: dark;
 }
 
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
-}
-
-body {
-  background: #0f1115;
-  color: #d8dbe2;
-  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 13px;
-  -webkit-font-smoothing: antialiased;
-}
-
-* {
+.ra-studio *,
+.ra-studio *::before,
+.ra-studio *::after {
   box-sizing: border-box;
 }
 
-::-webkit-scrollbar {
+.ra-studio ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
-::-webkit-scrollbar-thumb {
+.ra-studio ::-webkit-scrollbar-thumb {
   background: #2a2e37;
   border-radius: 6px;
 }
-::-webkit-scrollbar-track {
+.ra-studio ::-webkit-scrollbar-track {
   background: transparent;
 }
