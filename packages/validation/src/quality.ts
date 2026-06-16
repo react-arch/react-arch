@@ -1,12 +1,14 @@
 import type { Diagnostic } from "@react-arch/shared";
 import { allFloors, type BuildingDocument, type Opening, type Room } from "@react-arch/core";
-import { bounds, polygonArea, type Vec2 } from "@react-arch/geometry";
+import { bounds, polygonArea, stairGeometry, type Vec2 } from "@react-arch/geometry";
 
 export interface QualityOptions {
   minDoorWidth?: number;
   minCorridorWidth?: number;
   /** Minimum glazing area as a fraction of floor area for habitable rooms. */
   daylightRatio?: number;
+  /** Minimum clear landing in front of a door at a stair flight / stairwell void. */
+  minStairLanding?: number;
 }
 
 const HABITABLE = new Set(["bedroom", "sleeping", "living", "kitchen", "dining", "office"]);
@@ -50,8 +52,25 @@ export function checkQuality(doc: BuildingDocument, options: QualityOptions = {}
   const minDoor = options.minDoorWidth ?? 0.8;
   const minCorridor = options.minCorridorWidth ?? 0.9;
   const daylight = options.daylightRatio ?? 0.08;
+  const minLanding = options.minStairLanding ?? 0.6;
   const diags: Diagnostic[] = [];
   const materialIds = new Set(doc.materials.map((m) => m.id));
+
+  // Footprint each stair occupies, mapped to the floor(s) it affects: the
+  // flight on its own floor, plus the stairwell void on the floor above.
+  const floors = allFloors(doc);
+  const stairRects: { floorId: string; min: Vec2; max: Vec2 }[] = [];
+  for (const f of floors) {
+    for (const st of f.stairs) {
+      const fp = stairGeometry({
+        position: st.position, width: st.width, run: st.run, rise: st.rise,
+        direction: st.direction, steps: st.steps, baseY: 0,
+      }).footprint;
+      stairRects.push({ floorId: f.id, min: fp.min, max: fp.max });
+      const above = floors.find((o) => Math.abs(o.elevation - (f.elevation + f.height)) < 0.3);
+      if (above) stairRects.push({ floorId: above.id, min: fp.min, max: fp.max });
+    }
+  }
 
   const unknownMaterial = (kind: string, id: string, materialId: string) =>
     diags.push({
@@ -104,6 +123,39 @@ export function checkQuality(doc: BuildingDocument, options: QualityOptions = {}
             message: `Openings ${spans[i - 1]!.id} and ${spans[i]!.id} overlap on wall ${wallId}`,
             fix: "Space the openings so their offset ± width/2 ranges don't overlap.",
             data: { other: spans[i - 1]!.id, wallId },
+          });
+        }
+      }
+    }
+
+    // Landing clearance: a door must not open directly onto a stair flight or
+    // stairwell void — you'd step out straight onto the steps or a drop.
+    const floorStairRects = stairRects.filter((s) => s.floorId === floor.id);
+    if (floorStairRects.length > 0) {
+      for (const o of floor.openings) {
+        if (o.type !== "door") continue;
+        const wall = wallById.get(o.wallId);
+        if (!wall) continue;
+        const dx = wall.end[0] - wall.start[0];
+        const dy = wall.end[1] - wall.start[1];
+        const len = Math.hypot(dx, dy) || 1;
+        const cx = wall.start[0] + (dx / len) * o.offset;
+        const cy = wall.start[1] + (dy / len) * o.offset;
+        let nearest = Infinity;
+        for (const s of floorStairRects) {
+          const ox = Math.max(s.min[0] - cx, 0, cx - s.max[0]);
+          const oy = Math.max(s.min[1] - cy, 0, cy - s.max[1]);
+          nearest = Math.min(nearest, Math.hypot(ox, oy));
+        }
+        if (nearest + 1e-6 < minLanding) {
+          diags.push({
+            severity: "warning",
+            code: "door-blocks-stair",
+            entityKind: "opening",
+            entityId: o.id,
+            message: `Door ${o.id} opens ${nearest.toFixed(2)} m from a staircase (needs a ${minLanding} m clear landing)`,
+            fix: "Move the door or the stair so there is a clear landing in front of the door, away from the steps and stairwell.",
+            data: { clearanceM: round2(nearest), minM: minLanding },
           });
         }
       }

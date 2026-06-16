@@ -89,6 +89,23 @@ describe("checkQuality", () => {
     const c = codes(checkQuality(doc));
     expect(c.has("missing-stairs")).toBe(false);
   });
+
+  it("flags a door opening directly onto a stair flight", () => {
+    const doc = makeDoc();
+    const ground = doc.buildings[0]!.floors[0]!;
+    // Stair runs along the south wall, right where the bedroom door (w-s) sits.
+    ground.stairs.push({
+      id: "s1", floorId: "f", kind: "straight", position: [0, 3],
+      width: 1, run: 2, rise: 2.8, direction: 0, steps: 14,
+    });
+    ground.openings.push({
+      id: "d1", floorId: "f", wallId: "w-s", type: "door",
+      offset: 1, width: 0.9, height: 2.1, sillHeight: 0,
+    });
+    const d = checkQuality(doc).find((x) => x.code === "door-blocks-stair");
+    expect(d?.entityId).toBe("d1");
+    expect(typeof d?.fix).toBe("string");
+  });
 });
 
 describe("checkBrief", () => {
