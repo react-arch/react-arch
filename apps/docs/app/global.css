@@ -2,6 +2,17 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
+/* React Arch brand accent (#2563EB). */
+:root {
+  --color-fd-primary: #2563eb;
+  --color-fd-ring: #2563eb;
+}
+
+.dark {
+  --color-fd-primary: #6f9bff;
+  --color-fd-ring: #6f9bff;
+}
+
 html {
   scrollbar-gutter: stable;
 }

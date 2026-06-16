@@ -18,11 +18,10 @@ export function House() {
 export default function HomePage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
-      <span className="mb-4 rounded-full border border-fd-border px-3 py-1 text-xs uppercase tracking-wider text-fd-muted-foreground">
-        @react-arch/*
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo/react-arch-mark.svg" alt="React Arch" width={64} height={64} className="mb-5" />
       <h1 className="mb-3 text-4xl font-bold tracking-tight sm:text-5xl">
-        Declarative building design for the web
+        Design spaces in code
       </h1>
       <p className="mb-8 max-w-2xl text-fd-muted-foreground">
         Build floor plans and architectural models with React and TypeScript.

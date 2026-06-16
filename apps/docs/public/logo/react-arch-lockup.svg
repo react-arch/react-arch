@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 160">
+<g transform="translate(12 16) scale(1)">
+<path d="M24 118V60L68 22L112 60V118" fill="none" stroke="#2563EB" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter"/>
+<path d="M24 118H76V82H50" fill="none" stroke="#2563EB" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter"/>
+</g>
+<text x="154" y="101" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="700" letter-spacing="-3">React-Arch</text>
+</svg>

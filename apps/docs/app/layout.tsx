@@ -1,10 +1,20 @@
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import './global.css';
+import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 
 const inter = Inter({
   subsets: ['latin'],
 });
+
+export const metadata: Metadata = {
+  title: {
+    default: 'React Arch — Design spaces in code',
+    template: '%s — React Arch',
+  },
+  description:
+    'Declarative building design for the web. Build floor plans and architectural models with React and TypeScript.',
+};
 
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
