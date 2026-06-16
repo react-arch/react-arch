@@ -123,8 +123,8 @@ export function Building3D(props: Building3DProps) {
               metalness={0}
               envMapIntensity={0.5}
               polygonOffset
-              polygonOffsetFactor={1}
-              polygonOffsetUnits={1}
+              polygonOffsetFactor={isSelected(s.floorId) ? -4 : 1}
+              polygonOffsetUnits={isSelected(s.floorId) ? -4 : 1}
             />
           </mesh>
         ))}
@@ -143,6 +143,9 @@ export function Building3D(props: Building3DProps) {
                 wireframe={props.wireframe}
                 transparent={props.xray}
                 opacity={wallOpacity}
+                polygonOffset={sel}
+                polygonOffsetFactor={sel ? -4 : 0}
+                polygonOffsetUnits={sel ? -4 : 0}
               />
             </mesh>
           );
@@ -158,7 +161,15 @@ export function Building3D(props: Building3DProps) {
               {/* frame */}
               <mesh castShadow>
                 <boxGeometry args={[w, h, d]} />
-                <meshStandardMaterial color={sel ? ACCENT : PALETTE.frame} roughness={0.5} metalness={0.25} wireframe={props.wireframe} />
+                <meshStandardMaterial
+                  color={sel ? ACCENT : PALETTE.frame}
+                  roughness={0.5}
+                  metalness={0.25}
+                  wireframe={props.wireframe}
+                  polygonOffset={sel}
+                  polygonOffsetFactor={sel ? -4 : 0}
+                  polygonOffsetUnits={sel ? -4 : 0}
+                />
               </mesh>
               {/* glass / door panel inset within the frame */}
               <mesh>
@@ -191,6 +202,9 @@ export function Building3D(props: Building3DProps) {
                 wireframe={props.wireframe}
                 transparent={props.xray}
                 opacity={props.xray ? 0.4 : 1}
+                polygonOffset={sel}
+                polygonOffsetFactor={sel ? -4 : 0}
+                polygonOffsetUnits={sel ? -4 : 0}
               />
             </mesh>
           );
