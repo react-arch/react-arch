@@ -133,10 +133,31 @@ from that model. See [docs/adr](./docs/adr) for the decisions behind this.
 ```bash
 pnpm dev         # run the Studio
 pnpm build       # build the Studio (and any package builds)
+pnpm build:libs  # build the publishable libraries (tsdown → dist)
 pnpm test        # run unit + integration tests
 pnpm typecheck   # type-check all packages
 pnpm lint        # oxlint
+pnpm changeset   # record a versioned change for release
 ```
+
+## Releasing
+
+Releases are automated with [Changesets](https://github.com/changesets/changesets):
+
+1. Add a changeset describing your change: `pnpm changeset`.
+2. On merge to `main`, the **Release** workflow opens a "Version Packages" PR
+   that bumps versions and updates changelogs.
+3. Merging that PR builds the libraries (`tsdown`) and publishes them to npm
+   (requires an `NPM_TOKEN` secret).
+
+Packages develop from TypeScript source (`exports` → `src`) for instant HMR;
+`publishConfig` swaps `exports`/`types` to the built `dist` only at publish
+time. All `@react-arch/*` libraries version together; `create-react-arch-app`
+versions independently. The `react-arch` CLI is not published yet (it needs the
+Studio bundled first).
+
+CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, and builds on every
+push and PR.
 
 ## Testing
 
@@ -156,5 +177,6 @@ pnpm --filter @react-arch/examples exec vitest run
 
 Deferred for now (designed to be addable without breaking the model):
 constraint solver, editor package, materials/asset UI, Section view, DXF/IFC,
-PDF construction sheets, curved walls, advanced roofs, real-time collaboration
+PDF construction sheets, curved walls, advanced roofs, publishing the `react-arch`
+CLI (needs the Studio bundled), real-time collaboration
 (commands are already shaped as operations). See `docs/adr/0004-deferrals.md`.

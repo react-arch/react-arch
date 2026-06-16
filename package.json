@@ -14,13 +14,19 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "studio": "pnpm --filter @react-arch/studio dev"
+    "studio": "pnpm --filter @react-arch/studio dev",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "build:libs": "pnpm --filter \"./packages/*\" run build",
+    "ci:publish": "pnpm run build:libs && pnpm -r publish --filter=!react-arch --no-git-checks && changeset tag"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.27.10",
     "oxlint": "^0.15.0",
-    "tsdown": "^0.6.0",
+    "tsdown": "^0.22.0",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2",
+    "unrun": "^0.3.1",
     "vite": "^5.4.11",
     "vitest": "^2.1.8"
   }
