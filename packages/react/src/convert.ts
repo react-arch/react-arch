@@ -1,4 +1,5 @@
-import { createId, type Units, type Vec2 } from "@react-arch/shared";
+import { createId, round, type Units, type Vec2 } from "@react-arch/shared";
+import { normalize, sub } from "@react-arch/geometry";
 import {
   DEFAULT_MATERIALS,
   MODEL_VERSION,
@@ -186,7 +187,73 @@ function convertFloor(node: Instance, buildingId: string, materials: Material[])
     }
   }
 
+  mergeCoincidentWalls(floor);
   return floor;
+}
+
+/**
+ * Two adjacent rooms each generate their own perimeter walls, producing a pair
+ * of coincident walls on their shared edge. Without merging, a door declared on
+ * one room only cuts that room's wall and the neighbour's wall stays solid
+ * behind it — the opening never passes through (and the walls z-fight in 3D).
+ *
+ * This collapses coincident, equal-thickness walls into one survivor and
+ * re-points openings (re-projecting their offset) and room boundaries onto it,
+ * so an interior door becomes a real passage between the rooms.
+ */
+function mergeCoincidentWalls(floor: Floor): void {
+  const key = (w: Wall): string => {
+    const a: Vec2 = [round(w.start[0]), round(w.start[1])];
+    const b: Vec2 = [round(w.end[0]), round(w.end[1])];
+    // Order-insensitive so reversed walls share a key.
+    const [p, q] = a[0] < b[0] || (a[0] === b[0] && a[1] <= b[1]) ? [a, b] : [b, a];
+    return `${p[0]},${p[1]}|${q[0]},${q[1]}|${round(w.thickness)}`;
+  };
+
+  const groups = new Map<string, Wall[]>();
+  for (const w of floor.walls) {
+    const k = key(w);
+    const g = groups.get(k);
+    if (g) g.push(w);
+    else groups.set(k, [w]);
+  }
+
+  const survivors: Wall[] = [];
+  const survivorOf = new Map<string, Wall>(); // any wall id -> survivor wall
+  for (const group of groups.values()) {
+    const survivor = group[0]!;
+    survivors.push(survivor);
+    for (const w of group) survivorOf.set(w.id, survivor);
+  }
+
+  if (survivors.length === floor.walls.length) return; // nothing coincident
+
+  const wallById = new Map(floor.walls.map((w) => [w.id, w]));
+  for (const o of floor.openings) {
+    const survivor = survivorOf.get(o.wallId);
+    if (!survivor || survivor.id === o.wallId) continue;
+    const orig = wallById.get(o.wallId);
+    if (orig) {
+      // World centre of the opening on its original wall.
+      const od = normalize(sub(orig.end, orig.start));
+      const cx = orig.start[0] + od[0] * o.offset;
+      const cy = orig.start[1] + od[1] * o.offset;
+      // Offset of that point along the survivor (handles reversed direction).
+      const sd = normalize(sub(survivor.end, survivor.start));
+      o.offset = (cx - survivor.start[0]) * sd[0] + (cy - survivor.start[1]) * sd[1];
+    }
+    o.wallId = survivor.id;
+  }
+
+  for (const r of floor.rooms) {
+    if (r.boundaryWallIds) {
+      r.boundaryWallIds = Array.from(
+        new Set(r.boundaryWallIds.map((id) => survivorOf.get(id)?.id ?? id)),
+      );
+    }
+  }
+
+  floor.walls = survivors;
 }
 
 /**
