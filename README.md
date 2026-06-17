@@ -62,6 +62,25 @@ preview updates live — your code is the source of truth.
 > Publishing the Studio CLI to npm is on the roadmap — it ships a live bundler,
 > so it needs more packaging work than the libraries.
 
+## For AI agents
+
+React Arch is built for agents to write architecture-as-code and self-correct
+against machine-readable diagnostics. Install the agent skills (Claude Code,
+Cursor, Codex, and 65+ others) from [`react-arch/skills`](https://github.com/react-arch/skills):
+
+```bash
+npx skills add react-arch/skills --all
+```
+
+They teach the authoring contract and the validate → read diagnostics → fix loop.
+The loop itself is just:
+
+```bash
+npx react-arch check src/House.tsx --json   # report to stdout; non-zero exit on errors
+```
+
+…or in code: `review(renderToDocument(<House />))` from `@react-arch/validation`.
+
 ## The core idea
 
 ```
