@@ -18,7 +18,7 @@
     "changeset": "changeset",
     "version": "changeset version",
     "build:libs": "pnpm --filter \"./packages/*\" run build",
-    "ci:publish": "pnpm run build:libs && pnpm -r publish --filter=!react-arch --no-git-checks && changeset tag"
+    "ci:publish": "pnpm run build:libs && pnpm -r publish --no-git-checks && changeset tag"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.10",
