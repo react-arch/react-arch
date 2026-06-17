@@ -3,6 +3,7 @@ import { MODEL_VERSION, type BuildingDocument } from "@react-arch/core";
 import { checkQuality } from "./quality.js";
 import { checkBrief, roomSchedule, DesignBriefSchema } from "./brief.js";
 import { review } from "./review.js";
+import { compareVariants } from "./compare.js";
 
 function makeDoc(): BuildingDocument {
   return {
@@ -117,6 +118,25 @@ describe("checkQuality", () => {
     const d = checkQuality(doc).find((x) => x.code === "door-blocks-stair");
     expect(d?.entityId).toBe("d1");
     expect(typeof d?.fix).toBe("string");
+  });
+});
+
+describe("compareVariants", () => {
+  it("scores and ranks variants, picking the cleanest as best", () => {
+    const worse = makeDoc(); // base doc has a too-small room → extra warning
+    const better = makeDoc();
+    // Enlarge the bedroom past the 7 m² minimum to drop the room-too-small warning.
+    better.buildings[0]!.floors[0]!.rooms[0]!.polygon = [[0, 0], [4, 0], [4, 4], [0, 4]];
+
+    const cmp = compareVariants([
+      { name: "Worse", doc: worse },
+      { name: "Better", doc: better },
+    ]);
+    expect(cmp.variants).toHaveLength(2);
+    const betterM = cmp.variants.find((v) => v.name === "Better")!;
+    const worseM = cmp.variants.find((v) => v.name === "Worse")!;
+    expect(betterM.score).toBeGreaterThan(worseM.score);
+    expect(cmp.best).toBe("Better");
   });
 });
 

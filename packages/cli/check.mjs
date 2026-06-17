@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 
 const require = createRequire(import.meta.url);
+let bundleSeq = 0;
 
 const C = { red: "\x1b[31m", yellow: "\x1b[33m", cyan: "\x1b[36m", gray: "\x1b[90m", green: "\x1b[32m", bold: "\x1b[1m", reset: "\x1b[0m" };
 const sevColor = { error: C.red, warning: C.yellow, info: C.cyan };
@@ -78,7 +79,7 @@ async function loadBundle(entryPath) {
 
   const shim = [
     `export { renderToDocument } from "@react-arch/react";`,
-    `export { review, DesignBriefSchema } from "@react-arch/validation";`,
+    `export { review, compareVariants, DesignBriefSchema } from "@react-arch/validation";`,
     `export { exportJSON, exportSVG } from "@react-arch/exporters";`,
     `export { createElement } from "react";`,
     `import * as __entry from ${JSON.stringify(entryPath)};`,
@@ -99,7 +100,9 @@ async function loadBundle(entryPath) {
     external: ["three", "three/*", "@react-three/fiber", "@react-three/drei"],
   });
 
-  const tmp = path.join(tmpdir(), `react-arch-check.${process.pid}.mjs`);
+  // Unique per call: import() caches by URL, so reusing a name would return a
+  // stale bundle when comparing multiple entries.
+  const tmp = path.join(tmpdir(), `react-arch-check.${process.pid}.${bundleSeq++}.mjs`);
   writeFileSync(tmp, result.outputFiles[0].text);
   try {
     return await import(pathToFileURL(tmp).href);
@@ -171,6 +174,70 @@ export async function runCheck(opts) {
   process.stderr.write(`\n${C.gray}Wrote report + artifacts to ${path.relative(cwd, outDir) || outDir}/${C.reset}\n`);
   if (opts.json) console.log(JSON.stringify(combined, null, 2));
   return hadError ? 1 : 0;
+}
+
+function printComparison(cmp) {
+  const w = (s) => process.stderr.write(s + "\n");
+  const pad = (s, n) => String(s).padEnd(n);
+  const padL = (s, n) => String(s).padStart(n);
+  w(`\n${C.bold}Variant comparison${C.reset} ${C.gray}(${cmp.variants.length} variants)${C.reset}`);
+  w(`  ${C.gray}${pad("", 2)}${pad("variant", 22)}${padL("score", 6)}${padL("err", 5)}${padL("warn", 6)}${padL("info", 6)}${padL("area m²", 9)}${padL("rooms", 7)}${C.reset}`);
+  for (const v of cmp.variants) {
+    const star = v.name === cmp.best ? `${C.green}★${C.reset} ` : "  ";
+    const sc = v.score >= 90 ? C.green : v.score >= 60 ? C.yellow : C.red;
+    w(`  ${star}${pad(v.name, 22)}${sc}${padL(v.score, 4)}${C.reset}${padL(v.counts.error, 5)}${padL(v.counts.warning, 6)}${padL(v.counts.info, 6)}${padL(v.totalAreaM2, 9)}${padL(v.rooms, 7)}`);
+  }
+  if (cmp.best) w(`\n  ${C.green}★ best: ${C.bold}${cmp.best}${C.reset}`);
+}
+
+export async function runCompare(opts) {
+  const cwd = process.cwd();
+  const variants = [];
+  let comparator = null;
+  const used = new Set();
+
+  const multiEntry = opts.entries.length > 1;
+  for (const entryPath of opts.entries) {
+    let bundle;
+    try {
+      bundle = await loadBundle(entryPath);
+    } catch (err) {
+      console.error(`Failed to load ${path.relative(cwd, entryPath)}: ${err?.message ?? err}`);
+      return 1;
+    }
+    if (!comparator) comparator = bundle.compareVariants;
+    // When comparing files, disambiguate same-named components by their folder.
+    const folder = path.basename(path.dirname(path.dirname(entryPath)));
+    for (const { name, component } of pickComponents(bundle.Entry)) {
+      let doc;
+      try {
+        doc = bundle.renderToDocument(bundle.createElement(component), name);
+      } catch (err) {
+        console.error(`Failed to render ${name}: ${err?.message ?? err}`);
+        return 1;
+      }
+      if (!doc.buildings.length || doc.buildings.every((b) => b.floors.length === 0)) continue;
+      let unique = multiEntry ? `${name} · ${folder}` : name;
+      let n = 2;
+      while (used.has(unique)) unique = `${unique} (${n++})`;
+      used.add(unique);
+      variants.push({ name: unique, doc });
+    }
+  }
+
+  if (variants.length < 2) {
+    console.error("Need at least 2 building variants to compare. Export multiple building components, or pass multiple entry files.");
+    return 1;
+  }
+
+  const cmp = comparator(variants);
+  const outDir = path.resolve(cwd, opts.out ?? "react-arch-out");
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(path.join(outDir, "compare.json"), JSON.stringify(cmp, null, 2));
+  printComparison(cmp);
+  process.stderr.write(`\n${C.gray}Wrote comparison to ${path.relative(cwd, outDir) || outDir}/compare.json${C.reset}\n`);
+  if (opts.json) console.log(JSON.stringify(cmp, null, 2));
+  return 0;
 }
 
 void existsSync;

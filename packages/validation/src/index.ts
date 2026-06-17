@@ -18,4 +18,5 @@ export {
   type RoomScheduleRow,
 } from "./brief.js";
 export { review, type ReviewReport, type ReviewOptions } from "./review.js";
+export { compareVariants, type VariantComparison, type VariantMetrics } from "./compare.js";
 export type { Diagnostic } from "@react-arch/shared";

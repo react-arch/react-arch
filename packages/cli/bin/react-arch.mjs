@@ -12,8 +12,9 @@ const HELP = `
 React Arch — AI writes architecture-as-code; React Arch validates & visualises it.
 
 Usage
-  react-arch studio [entry]      Launch the Studio (visualizer) for your project
-  react-arch check  [entry]      Render → validate → export → report (for agents/CI)
+  react-arch studio  [entry]        Launch the Studio (visualizer) for your project
+  react-arch check   [entry]        Render → validate → export → report (for agents/CI)
+  react-arch compare [entries...]   Score and rank building variants
 
 Options (studio)
   -p, --port <number>            Port to serve the Studio on (default 5173)
@@ -26,12 +27,18 @@ Options (check)
   --glb                          Also export a GLB model
   --json                         Print the combined report as JSON to stdout
 
+Options (compare)
+  --out <dir>                    Output directory (default react-arch-out)
+  --json                         Print the comparison as JSON to stdout
+
 Common
   -v, --version                  Print version
   -h, --help                     Show this help
 
 [entry] defaults to one of: src/Root.tsx, src/root.tsx, src/House.tsx,
 src/index.tsx, src/index.ts. \`check\` exits non-zero when there are errors.
+\`compare\` treats every exported building component (across all entries) as a
+variant — give it several components or several files.
 `;
 
 function parse(args) {
@@ -73,6 +80,21 @@ if (opts.version) { console.log(VERSION); process.exit(0); }
 if (opts.help || opts._.length === 0) { console.log(HELP); process.exit(0); }
 
 const command = opts._[0];
+
+if (command === "compare") {
+  const args = opts._.slice(1);
+  const entries = (args.length ? args : [undefined]).map((a) => {
+    const e = resolveEntry(a);
+    if (!e) {
+      console.error(`Could not find entry${a ? ` "${a}"` : ""}. Pass entry files, or create one of: ${DEFAULT_ENTRIES.join(", ")}`);
+      process.exit(1);
+    }
+    return e;
+  });
+  const { runCompare } = await import(new URL("../check.mjs", import.meta.url));
+  process.exit(await runCompare({ entries, out: opts.out, json: opts.json }));
+}
+
 const entry = resolveEntry(opts._[1]);
 if (!entry) {
   console.error(`Could not find a building entry. Pass one explicitly, or create one of: ${DEFAULT_ENTRIES.join(", ")}`);

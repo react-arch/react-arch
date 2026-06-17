@@ -1,0 +1,37 @@
+{
+  "variants": [
+    {
+      "name": "House · small",
+      "ok": true,
+      "counts": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "totalAreaM2": 36,
+      "floors": 1,
+      "rooms": 2,
+      "walls": 7,
+      "openings": 4,
+      "objects": 3,
+      "score": 100
+    },
+    {
+      "name": "House · big",
+      "ok": true,
+      "counts": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "totalAreaM2": 176,
+      "floors": 2,
+      "rooms": 8,
+      "walls": 24,
+      "openings": 16,
+      "objects": 10,
+      "score": 100
+    }
+  ],
+  "best": "House · big"
+}
