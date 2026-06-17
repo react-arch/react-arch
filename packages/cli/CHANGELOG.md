@@ -1,5 +1,17 @@
 # react-arch
 
+## 0.3.0
+
+### Patch Changes
+
+- Updated dependencies [edca1ae]
+  - @react-arch/core@0.3.0
+  - @react-arch/exporters@0.3.0
+  - @react-arch/react@0.3.0
+  - @react-arch/validation@0.3.0
+  - @react-arch/geometry@0.3.0
+  - @react-arch/shared@0.3.0
+
 ## 0.2.1
 
 ### Patch Changes
