@@ -1,15 +1,17 @@
 {
   "name": "create-react-arch-app",
-  "version": "0.3.0",
+  "version": "0.2.1",
   "description": "Scaffold a new React Arch project (npm create react-arch-app).",
   "type": "module",
   "bin": {
     "create-react-arch-app": "index.mjs"
   },
   "files": [
-    "index.mjs",
-    "template"
+    "index.mjs"
   ],
+  "dependencies": {
+    "@clack/prompts": "^1.5.1"
+  },
   "keywords": [
     "react-arch",
     "create",

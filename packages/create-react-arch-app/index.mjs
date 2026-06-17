@@ -1,24 +1,21 @@
 #!/usr/bin/env node
 import { mkdirSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import readline from "node:readline";
-import { createInterface } from "node:readline/promises";
 import path from "node:path";
+import * as p from "@clack/prompts";
 
 const VERSION = "0.3.0";
 
 // Pin to the published library line.
 const RA = "^0.1.0";
 
-// ── tiny ANSI helpers (no deps; respect NO_COLOR) ──────────────────────────
+// ── tiny ANSI helpers (respect NO_COLOR) — used inside clack notes ──────────
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
 const sgr = (n) => (s) => (useColor ? `\x1b[${n}m${s}\x1b[0m` : String(s));
 const C = {
   cyan: sgr(36), dim: sgr(2), bold: sgr(1), green: sgr(32),
   red: sgr(31), yellow: sgr(33), magenta: sgr(35),
 };
-const Q = C.cyan(C.bold("?"));
-const OK = C.green("✓");
 
 // ── templates ──────────────────────────────────────────────────────────────
 const TEMPLATES = [
@@ -289,56 +286,32 @@ npx skills add react-arch/skills --all
   };
 }
 
-// ── prompts (interactive, no deps) ─────────────────────────────────────────
-async function text(message, def) {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const hint = def ? C.dim(` (${def})`) : "";
-  const ans = (await rl.question(`${Q} ${message}${hint} `)).trim();
-  rl.close();
-  return ans || def;
+// ── clack prompt helpers ────────────────────────────────────────────────────
+/** Exit cleanly if the user hit Ctrl-C / escaped a prompt. */
+function bail(value) {
+  if (p.isCancel(value)) {
+    p.cancel("Cancelled.");
+    process.exit(0);
+  }
+  return value;
 }
 
-async function confirm(message, def = true) {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const ans = (await rl.question(`${Q} ${message} ${C.dim(def ? "(Y/n)" : "(y/N)")} `)).trim().toLowerCase();
-  rl.close();
-  if (!ans) return def;
-  return ans[0] === "y";
+async function ask(message, initialValue) {
+  return bail(await p.confirm({ message, initialValue }));
 }
 
-function select(message, options, def = 0) {
-  return new Promise((resolve) => {
-    let i = def;
-    const n = options.length;
-    const draw = (first) => {
-      if (!first) process.stdout.write(`\x1b[${n + 1}A`);
-      process.stdout.write("\x1b[J");
-      process.stdout.write(`${Q} ${message}  ${C.dim("(↑/↓, enter)")}\n`);
-      options.forEach((o, idx) => {
-        const active = idx === i;
-        const head = active ? C.cyan("❯ " + o.label) : "  " + o.label;
-        const hint = o.hint ? C.dim("  — " + o.hint) : "";
-        process.stdout.write(`${head}${hint}\n`);
-      });
-    };
-    draw(true);
-    readline.emitKeypressEvents(process.stdin);
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
-    const onKey = (_, key) => {
-      if (!key) return;
-      if (key.name === "up" || key.name === "k") { i = (i - 1 + n) % n; draw(false); }
-      else if (key.name === "down" || key.name === "j") { i = (i + 1) % n; draw(false); }
-      else if (key.name === "return") { cleanup(); resolve(options[i].value); }
-      else if (key.ctrl && key.name === "c") { cleanup(); process.exit(1); }
-    };
-    const cleanup = () => {
-      process.stdin.setRawMode(false);
-      process.stdin.pause();
-      process.stdin.removeListener("keypress", onKey);
-    };
-    process.stdin.on("keypress", onKey);
-  });
+/** Run a step with a spinner; returns true on success, false (skipped) on error. */
+function task(label, fn) {
+  const s = p.spinner();
+  s.start(label);
+  try {
+    fn();
+    s.stop(`${label} ${C.green("✓")}`);
+    return true;
+  } catch {
+    s.stop(`${label} ${C.yellow("— skipped")}`);
+    return false;
+  }
 }
 
 // ── package manager ─────────────────────────────────────────────────────────
@@ -400,12 +373,14 @@ async function main() {
 
   const interactive = process.stdin.isTTY && !opts.yes;
 
-  console.log(`\n  ${C.magenta(C.bold("React Arch"))} ${C.dim("· create a new project")}\n`);
+  p.intro(`${C.magenta(C.bold(" React Arch "))} ${C.dim("create a new project")}`);
 
   // name
   let targetArg = opts._[0];
   if (!targetArg) {
-    targetArg = interactive ? await text("Project name?", "my-building") : "my-building";
+    targetArg = interactive
+      ? bail(await p.text({ message: "Project name?", placeholder: "my-building", defaultValue: "my-building" }))
+      : "my-building";
   }
   const dir = path.resolve(process.cwd(), targetArg);
   const name = path.basename(dir).replace(/[^a-z0-9-]/gi, "-").toLowerCase() || "my-building";
@@ -421,7 +396,11 @@ async function main() {
   if (templateId && !HOUSES[templateId]) fail(`Unknown template "${templateId}". Choose: ${TEMPLATES.map((t) => t.id).join(", ")}`);
   if (!templateId) {
     templateId = interactive
-      ? await select("Template?", TEMPLATES.map((t) => ({ label: t.label, hint: t.hint, value: t.id })), 0)
+      ? bail(await p.select({
+          message: "Template?",
+          initialValue: "starter",
+          options: TEMPLATES.map((t) => ({ value: t.id, label: t.label, hint: t.hint })),
+        }))
       : "starter";
   }
 
@@ -429,9 +408,9 @@ async function main() {
   const pm = opts.pm || detectPM();
 
   // install / git / skills
-  const install = opts.install ?? (interactive ? await confirm("Install dependencies now?", true) : true);
-  const git = opts.git ?? (interactive ? await confirm("Initialize a git repository?", true) : true);
-  const skills = opts.skills ?? (interactive ? await confirm("Install the React Arch agent skills?", false) : false);
+  let install = opts.install ?? (interactive ? await ask("Install dependencies now?", true) : true);
+  const git = opts.git ?? (interactive ? await ask("Initialize a git repository?", true) : true);
+  const skills = opts.skills ?? (interactive ? await ask("Install the React Arch agent skills?", false) : false);
 
   // write files
   const files = projectFiles(name, templateId);
@@ -441,43 +420,32 @@ async function main() {
     mkdirSync(path.dirname(full), { recursive: true });
     writeFileSync(full, content);
   }
-  console.log(`\n  ${OK} Created ${C.bold(name)} ${C.dim(`(${templateId} template)`)} in ${path.relative(process.cwd(), dir) || "."}`);
+  p.log.success(`Created ${C.bold(name)} ${C.dim(`(${templateId} template)`)}`);
 
-  if (git) step("Initializing git", () => run("git", ["init", "-q"], dir) && run("git", ["add", "-A"], dir));
-  if (install) step(`Installing dependencies with ${pm}`, () => run(pm, ["install"], dir, true));
-  if (skills) step("Installing agent skills", () => run("npx", ["-y", "skills@latest", "add", "react-arch/skills", "--all"], dir, true));
+  if (git) task("Initializing git", () => { run("git", ["init", "-q"], dir); run("git", ["add", "-A"], dir); });
+  if (install) install = task(`Installing dependencies with ${pm}`, () => run(pm, ["install"], dir));
+  if (skills) task("Installing agent skills", () => run("npx", ["-y", "skills@latest", "add", "react-arch/skills", "--all"], dir));
 
   // next steps
   const relDir = path.relative(process.cwd(), dir) || ".";
   const run1 = runCmd(pm);
-  console.log(`\n  ${C.green(C.bold("Done!"))} Next steps:\n`);
-  if (relDir !== ".") console.log(`    ${C.cyan(`cd ${relDir}`)}`);
-  if (!install) console.log(`    ${C.cyan(`${pm} install`)}`);
-  console.log(`    ${C.cyan(`${run1} dev`)}      ${C.dim("# open the Studio (2D / 3D / JSON)")}`);
-  if (!skills) console.log(`\n  ${C.dim("For AI agents:")} ${C.cyan("npx skills add react-arch/skills --all")}`);
-  console.log("");
+  const lines = [];
+  if (relDir !== ".") lines.push(C.cyan(`cd ${relDir}`));
+  if (!install) lines.push(C.cyan(`${pm} install`));
+  lines.push(`${C.cyan(`${run1} dev`)}  ${C.dim("# open the Studio (2D / 3D / JSON)")}`);
+  if (!skills) lines.push(`${C.dim("agents:")} ${C.cyan("npx skills add react-arch/skills --all")}`);
+  p.note(lines.join("\n"), "Next steps");
+  p.outro(C.green("Happy building!"));
 }
 
-function step(label, fn) {
-  process.stdout.write(`  ${C.dim("•")} ${label}…`);
-  try {
-    const ok = fn();
-    process.stdout.write(`\r  ${OK} ${label}    \n`);
-    return ok;
-  } catch {
-    process.stdout.write(`\r  ${C.yellow("!")} ${label} — skipped\n`);
-    return false;
-  }
-}
-
-function run(cmd, args, cwd, inheritOnFail = false) {
-  const r = spawnSync(cmd, args, { cwd, stdio: inheritOnFail ? ["ignore", "ignore", "ignore"] : "ignore", shell: process.platform === "win32" });
+function run(cmd, args, cwd) {
+  const r = spawnSync(cmd, args, { cwd, stdio: "ignore", shell: process.platform === "win32" });
   if (r.status !== 0) throw new Error(`${cmd} exited ${r.status}`);
   return true;
 }
 
 function fail(msg) {
-  console.error(`\n  ${C.red("✗")} ${msg}\n`);
+  p.cancel(C.red(msg));
   process.exit(1);
 }
 
