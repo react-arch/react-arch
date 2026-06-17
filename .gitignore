@@ -8,3 +8,6 @@ playwright-report/
 test-results/
 .vite/
 *.local
+
+# CLI check/compare output
+react-arch-out/
