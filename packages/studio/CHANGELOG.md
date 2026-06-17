@@ -1,5 +1,18 @@
 # @react-arch/studio
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [637a5ef]
+  - @react-arch/core@0.2.1
+  - @react-arch/exporters@0.2.1
+  - @react-arch/react@0.2.1
+  - @react-arch/renderer-2d@0.2.1
+  - @react-arch/renderer-3d@0.2.1
+  - @react-arch/validation@0.2.1
+  - @react-arch/geometry@0.2.1
+
 ## 0.2.0
 
 ### Patch Changes
