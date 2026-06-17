@@ -95,7 +95,12 @@ let studioDir;
 try {
   studioDir = path.dirname(require.resolve("@react-arch/studio-app/package.json"));
 } catch {
-  console.error("Could not resolve @react-arch/studio-app. Is react-arch installed correctly?");
+  console.error(
+    "`react-arch studio` ships a live bundler that isn't part of the published\n" +
+      "CLI yet. Render the Studio in your own app with the `<Studio>` component\n" +
+      "from `@react-arch/studio`, or run it from the React Arch repo.\n" +
+      "`react-arch check` works everywhere — use that for validation.",
+  );
   process.exit(1);
 }
 const binName = process.platform === "win32" ? "vite.cmd" : "vite";

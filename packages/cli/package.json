@@ -1,8 +1,7 @@
 {
   "name": "react-arch",
   "version": "0.1.0",
-  "description": "React Arch CLI — launch the Studio for your project (npx react-arch studio).",
-  "private": true,
+  "description": "React Arch CLI — validate architecture-as-code (react-arch check) and launch the Studio.",
   "type": "module",
   "bin": {
     "react-arch": "bin/react-arch.mjs"
@@ -12,12 +11,18 @@
     "check.mjs"
   ],
   "dependencies": {
-    "@react-arch/studio-app": "workspace:*",
-    "@react-arch/react": "workspace:*",
-    "@react-arch/validation": "workspace:*",
+    "@react-arch/core": "workspace:*",
     "@react-arch/exporters": "workspace:*",
+    "@react-arch/geometry": "workspace:*",
+    "@react-arch/react": "workspace:*",
+    "@react-arch/shared": "workspace:*",
+    "@react-arch/validation": "workspace:*",
     "esbuild": "^0.24.0",
-    "react": "^18.3.1"
+    "react": "^18.3.1",
+    "react-reconciler": "^0.29.2"
+  },
+  "devDependencies": {
+    "@react-arch/studio-app": "workspace:*"
   },
   "keywords": [
     "react-arch",
@@ -26,5 +31,10 @@
     "studio",
     "cli"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/react-arch/react-arch.git",
+    "directory": "packages/cli"
+  },
   "license": "MIT"
 }

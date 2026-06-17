@@ -207,15 +207,21 @@ importers:
 
   packages/cli:
     dependencies:
+      '@react-arch/core':
+        specifier: workspace:*
+        version: link:../core
       '@react-arch/exporters':
         specifier: workspace:*
         version: link:../exporters
+      '@react-arch/geometry':
+        specifier: workspace:*
+        version: link:../geometry
       '@react-arch/react':
         specifier: workspace:*
         version: link:../react
-      '@react-arch/studio-app':
+      '@react-arch/shared':
         specifier: workspace:*
-        version: link:../../apps/studio
+        version: link:../shared
       '@react-arch/validation':
         specifier: workspace:*
         version: link:../validation
@@ -225,6 +231,13 @@ importers:
       react:
         specifier: ^18.3.1
         version: 18.3.1
+      react-reconciler:
+        specifier: ^0.29.2
+        version: 0.29.2(react@18.3.1)
+    devDependencies:
+      '@react-arch/studio-app':
+        specifier: workspace:*
+        version: link:../../apps/studio
 
   packages/core:
     dependencies:

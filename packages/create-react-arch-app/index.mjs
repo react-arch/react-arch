@@ -6,8 +6,9 @@ import * as p from "@clack/prompts";
 
 const VERSION = "0.3.0";
 
-// Pin to the published library line.
-const RA = "^0.1.0";
+// Pin to the published library line + the CLI used by `npm run check`.
+const RA = "^0.2.0";
+const CLI = "^0.2.0";
 
 // ── tiny ANSI helpers (respect NO_COLOR) — used inside clack notes ──────────
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
@@ -198,6 +199,7 @@ function projectFiles(name, templateId) {
           dev: "vite",
           build: "vite build",
           preview: "vite preview",
+          check: "react-arch check src/House.tsx",
         },
         dependencies: {
           "@react-arch/react": RA,
@@ -209,6 +211,7 @@ function projectFiles(name, templateId) {
           "@types/react": "^18.3.12",
           "@types/react-dom": "^18.3.1",
           "@vitejs/plugin-react": "^4.3.4",
+          "react-arch": CLI,
           typescript: "^5.7.2",
           vite: "^6.0.0",
         },
@@ -275,6 +278,7 @@ read-only visualizer.
 
 \`\`\`bash
 npm run dev      # open the React Arch Studio (2D / 3D / JSON, live reload)
+npm run check    # validate the building → machine-readable diagnostics
 \`\`\`
 
 Edit \`src/House.tsx\`. For AI agents, install the skills:
@@ -432,7 +436,8 @@ async function main() {
   const lines = [];
   if (relDir !== ".") lines.push(C.cyan(`cd ${relDir}`));
   if (!install) lines.push(C.cyan(`${pm} install`));
-  lines.push(`${C.cyan(`${run1} dev`)}  ${C.dim("# open the Studio (2D / 3D / JSON)")}`);
+  lines.push(`${C.cyan(`${run1} dev`)}    ${C.dim("# open the Studio (2D / 3D / JSON)")}`);
+  lines.push(`${C.cyan(`${run1} check`)}  ${C.dim("# validate the building")}`);
   if (!skills) lines.push(`${C.dim("agents:")} ${C.cyan("npx skills add react-arch/skills --all")}`);
   p.note(lines.join("\n"), "Next steps");
   p.outro(C.green("Happy building!"));

@@ -14,14 +14,16 @@ function slug(s) {
 }
 
 function printReport(name, report) {
+  // Human output goes to stderr so `--json` keeps stdout pure for piping.
+  const log = (s) => process.stderr.write(s + "\n");
   const { counts } = report;
   const head = report.ok ? `${C.green}✓${C.reset}` : `${C.red}✗${C.reset}`;
-  console.log(`\n${head} ${C.bold}${name}${C.reset} ${C.gray}— ${report.summary.floors} floor(s), ${report.summary.rooms} room(s), ${report.schedule.totalAreaM2} m²${C.reset}`);
-  console.log(`  ${C.red}${counts.error} error${C.reset}  ${C.yellow}${counts.warning} warning${C.reset}  ${C.cyan}${counts.info} info${C.reset}`);
+  log(`\n${head} ${C.bold}${name}${C.reset} ${C.gray}— ${report.summary.floors} floor(s), ${report.summary.rooms} room(s), ${report.schedule.totalAreaM2} m²${C.reset}`);
+  log(`  ${C.red}${counts.error} error${C.reset}  ${C.yellow}${counts.warning} warning${C.reset}  ${C.cyan}${counts.info} info${C.reset}`);
   for (const d of report.diagnostics) {
     const col = sevColor[d.severity] || C.gray;
-    console.log(`  ${col}${d.severity}${C.reset} ${C.gray}[${d.code}]${C.reset} ${d.message}`);
-    if (d.fix) console.log(`      ${C.gray}↳ ${d.fix}${C.reset}`);
+    log(`  ${col}${d.severity}${C.reset} ${C.gray}[${d.code}]${C.reset} ${d.message}`);
+    if (d.fix) log(`      ${C.gray}↳ ${d.fix}${C.reset}`);
   }
 }
 
@@ -46,7 +48,7 @@ function pickComponents(entryNs) {
  * control the JSX transform and keep react/react-reconciler/three external (one
  * shared instance). Returns the loaded module namespace.
  */
-async function loadBundle(entryPath, cwd) {
+async function loadBundle(entryPath) {
   const esbuild = await import("esbuild");
   const cliDir = path.dirname(new URL(import.meta.url).pathname);
 
@@ -113,7 +115,7 @@ export async function runCheck(opts) {
 
   let bundle;
   try {
-    bundle = await loadBundle(entryPath, cwd);
+    bundle = await loadBundle(entryPath);
   } catch (err) {
     console.error(`Failed to load ${path.relative(cwd, entryPath)}: ${err?.message ?? err}`);
     return 1;
@@ -166,8 +168,8 @@ export async function runCheck(opts) {
 
   const combined = { buildings: buildings.map((b) => ({ name: b.name, ...b.report })) };
   writeFileSync(path.join(outDir, "report.json"), JSON.stringify(combined, null, 2));
+  process.stderr.write(`\n${C.gray}Wrote report + artifacts to ${path.relative(cwd, outDir) || outDir}/${C.reset}\n`);
   if (opts.json) console.log(JSON.stringify(combined, null, 2));
-  console.log(`\n${C.gray}Wrote report + artifacts to ${path.relative(cwd, outDir) || outDir}/${C.reset}`);
   return hadError ? 1 : 0;
 }
 
