@@ -1,5 +1,11 @@
 # @react-arch/geometry
 
+## 0.3.0
+
+### Patch Changes
+
+- @react-arch/shared@0.3.0
+
 ## 0.2.1
 
 ### Patch Changes
