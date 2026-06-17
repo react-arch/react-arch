@@ -1,0 +1,348 @@
+{
+  "id": "doc-my-house",
+  "version": "0.1.0",
+  "name": "My House",
+  "units": "metric",
+  "buildings": [
+    {
+      "id": "building-1",
+      "name": "My House",
+      "floors": [
+        {
+          "id": "ground",
+          "buildingId": "building-1",
+          "name": "Ground Floor",
+          "elevation": 0,
+          "height": 2.8,
+          "visible": true,
+          "locked": false,
+          "walls": [
+            {
+              "id": "living-wall-north",
+              "floorId": "ground",
+              "start": [
+                0,
+                0
+              ],
+              "end": [
+                5,
+                0
+              ],
+              "thickness": 0.2,
+              "height": 2.8
+            },
+            {
+              "id": "kitchen-wall-north",
+              "floorId": "ground",
+              "start": [
+                5,
+                0
+              ],
+              "end": [
+                9,
+                0
+              ],
+              "thickness": 0.2,
+              "height": 2.8
+            },
+            {
+              "id": "living-wall-south",
+              "floorId": "ground",
+              "start": [
+                0,
+                4
+              ],
+              "end": [
+                5,
+                4
+              ],
+              "thickness": 0.2,
+              "height": 2.8
+            },
+            {
+              "id": "kitchen-wall-south",
+              "floorId": "ground",
+              "start": [
+                5,
+                4
+              ],
+              "end": [
+                9,
+                4
+              ],
+              "thickness": 0.2,
+              "height": 2.8
+            },
+            {
+              "id": "living-wall-west",
+              "floorId": "ground",
+              "start": [
+                0,
+                0
+              ],
+              "end": [
+                0,
+                4
+              ],
+              "thickness": 0.2,
+              "height": 2.8
+            },
+            {
+              "id": "living-wall-east",
+              "floorId": "ground",
+              "start": [
+                5,
+                0
+              ],
+              "end": [
+                5,
+                4
+              ],
+              "thickness": 0.2,
+              "height": 2.8
+            },
+            {
+              "id": "kitchen-wall-east",
+              "floorId": "ground",
+              "start": [
+                9,
+                0
+              ],
+              "end": [
+                9,
+                4
+              ],
+              "thickness": 0.2,
+              "height": 2.8
+            }
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "floorId": "ground",
+              "name": "Living Room",
+              "polygon": [
+                [
+                  0,
+                  0
+                ],
+                [
+                  5,
+                  0
+                ],
+                [
+                  5,
+                  4
+                ],
+                [
+                  0,
+                  4
+                ]
+              ],
+              "usageType": "living",
+              "boundaryWallIds": [
+                "living-wall-north",
+                "living-wall-south",
+                "living-wall-west",
+                "living-wall-east"
+              ]
+            },
+            {
+              "id": "kitchen",
+              "floorId": "ground",
+              "name": "Kitchen",
+              "polygon": [
+                [
+                  5,
+                  0
+                ],
+                [
+                  9,
+                  0
+                ],
+                [
+                  9,
+                  4
+                ],
+                [
+                  5,
+                  4
+                ]
+              ],
+              "usageType": "kitchen",
+              "boundaryWallIds": [
+                "kitchen-wall-north",
+                "kitchen-wall-south",
+                "living-wall-east",
+                "kitchen-wall-east"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "living-door-south-1",
+              "floorId": "ground",
+              "wallId": "living-wall-south",
+              "type": "door",
+              "offset": 2.5,
+              "width": 1,
+              "height": 2.2,
+              "sillHeight": 0
+            },
+            {
+              "id": "living-door-east-2",
+              "floorId": "ground",
+              "wallId": "living-wall-east",
+              "type": "door",
+              "offset": 2,
+              "width": 0.9,
+              "height": 2.1,
+              "sillHeight": 0
+            },
+            {
+              "id": "living-window-west-3",
+              "floorId": "ground",
+              "wallId": "living-wall-west",
+              "type": "window",
+              "offset": 2,
+              "width": 2.2,
+              "height": 1.4,
+              "sillHeight": 0.9
+            },
+            {
+              "id": "kitchen-window-north-1",
+              "floorId": "ground",
+              "wallId": "kitchen-wall-north",
+              "type": "window",
+              "offset": 2,
+              "width": 1.6,
+              "height": 1.2,
+              "sillHeight": 0.9
+            }
+          ],
+          "objects": [
+            {
+              "id": "living-object-1",
+              "floorId": "ground",
+              "type": "sofa",
+              "position": [
+                2.5,
+                3.2,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1.3,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "living-object-2",
+              "floorId": "ground",
+              "type": "table",
+              "position": [
+                2.5,
+                1.6,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "kitchen-object-1",
+              "floorId": "ground",
+              "type": "kitchen counter",
+              "position": [
+                7,
+                0.5,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                3,
+                1,
+                1
+              ]
+            }
+          ],
+          "stairs": []
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "id": "mat-plaster",
+      "name": "White Plaster",
+      "category": "wall",
+      "baseColor": "#e8e6e1",
+      "roughness": 0.9
+    },
+    {
+      "id": "mat-concrete",
+      "name": "Concrete",
+      "category": "wall",
+      "baseColor": "#9b9b97",
+      "roughness": 0.8
+    },
+    {
+      "id": "mat-oak",
+      "name": "Oak Floor",
+      "category": "floor",
+      "baseColor": "#b88a52",
+      "roughness": 0.6
+    },
+    {
+      "id": "mat-dark-wood",
+      "name": "Dark Wood",
+      "category": "wood",
+      "baseColor": "#4a3525",
+      "roughness": 0.5
+    },
+    {
+      "id": "mat-glass",
+      "name": "Glass",
+      "category": "glass",
+      "baseColor": "#bcd6e6",
+      "opacity": 0.35,
+      "roughness": 0.05,
+      "metalness": 0.1
+    },
+    {
+      "id": "mat-metal",
+      "name": "Metal",
+      "category": "metal",
+      "baseColor": "#8a8d91",
+      "metalness": 0.9,
+      "roughness": 0.3
+    },
+    {
+      "id": "mat-tile",
+      "name": "Ceramic Tile",
+      "category": "ceramic",
+      "baseColor": "#d8dcdd",
+      "roughness": 0.4
+    }
+  ],
+  "assets": [],
+  "metadata": {
+    "source": "react"
+  }
+}
