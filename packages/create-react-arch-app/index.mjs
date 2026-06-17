@@ -210,8 +210,8 @@ function projectFiles(name, templateId) {
         devDependencies: {
           "@types/react": "^18.3.12",
           "@types/react-dom": "^18.3.1",
+          "@react-arch/cli": CLI,
           "@vitejs/plugin-react": "^4.3.4",
-          "react-arch": CLI,
           typescript: "^5.7.2",
           vite: "^6.0.0",
         },

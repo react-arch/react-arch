@@ -1,5 +1,5 @@
 {
-  "name": "react-arch",
+  "name": "@react-arch/cli",
   "version": "0.2.0",
   "description": "React Arch CLI — validate architecture-as-code (react-arch check) and launch the Studio.",
   "type": "module",

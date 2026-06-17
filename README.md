@@ -76,7 +76,7 @@ They teach the authoring contract and the validate → read diagnostics → fix 
 The loop itself is just:
 
 ```bash
-npx react-arch check src/House.tsx --json   # report to stdout; non-zero exit on errors
+npx @react-arch/cli check src/House.tsx --json   # report to stdout; non-zero exit on errors
 ```
 
 …or in code: `review(renderToDocument(<House />))` from `@react-arch/validation`.
