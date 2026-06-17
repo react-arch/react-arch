@@ -10,6 +10,9 @@
     "bin",
     "check.mjs"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@react-arch/core": "workspace:*",
     "@react-arch/exporters": "workspace:*",
