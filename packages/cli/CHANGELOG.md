@@ -1,5 +1,17 @@
 # react-arch
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [637a5ef]
+  - @react-arch/core@0.2.1
+  - @react-arch/exporters@0.2.1
+  - @react-arch/react@0.2.1
+  - @react-arch/validation@0.2.1
+  - @react-arch/geometry@0.2.1
+  - @react-arch/shared@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
