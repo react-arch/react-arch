@@ -36,3 +36,20 @@ export function segmentIntersection(s1: Segment, s2: Segment): Vec2 | null {
   }
   return [s1.a[0] + t * r[0], s1.a[1] + t * r[1]];
 }
+
+/**
+ * True only when two segments cross strictly through each other's interior (an
+ * "X" crossing). Shared endpoints (corners) and endpoint-on-interior contacts
+ * (T-junctions) return false, since those are legitimate wall joins. `tol` is a
+ * fraction of each segment's length kept clear of its endpoints.
+ */
+export function segmentsProperlyIntersect(s1: Segment, s2: Segment, tol = 1e-4): boolean {
+  const r = sub(s1.b, s1.a);
+  const s = sub(s2.b, s2.a);
+  const denom = cross(r, s);
+  if (Math.abs(denom) < EPSILON) return false; // parallel or collinear
+  const qp = sub(s2.a, s1.a);
+  const t = cross(qp, s) / denom;
+  const u = cross(qp, r) / denom;
+  return t > tol && t < 1 - tol && u > tol && u < 1 - tol;
+}

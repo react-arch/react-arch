@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { polygonArea, polygonCentroid } from "./polygon.js";
 import { openingFits, openingSpan, wallLength, wallPolygon } from "./wall.js";
-import { segmentIntersection } from "./line.js";
+import { segmentIntersection, segmentsProperlyIntersect } from "./line.js";
 import { findSnap, snapToGrid } from "./snap.js";
 import { roofGeometry } from "./roof.js";
 import { stairGeometry } from "./stair.js";
@@ -59,6 +59,24 @@ describe("line", () => {
     expect(
       segmentIntersection({ a: [0, 0], b: [1, 0] }, { a: [0, 1], b: [1, 1] }),
     ).toBeNull();
+  });
+
+  it("flags a proper interior crossing", () => {
+    expect(
+      segmentsProperlyIntersect({ a: [0, 0], b: [2, 2] }, { a: [0, 2], b: [2, 0] }),
+    ).toBe(true);
+  });
+
+  it("does not flag shared endpoints (corners)", () => {
+    expect(
+      segmentsProperlyIntersect({ a: [0, 0], b: [2, 0] }, { a: [2, 0], b: [2, 2] }),
+    ).toBe(false);
+  });
+
+  it("does not flag T-junctions (endpoint on interior)", () => {
+    expect(
+      segmentsProperlyIntersect({ a: [0, 0], b: [4, 0] }, { a: [2, 0], b: [2, 3] }),
+    ).toBe(false);
   });
 });
 

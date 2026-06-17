@@ -1,6 +1,6 @@
 import type { Diagnostic } from "@react-arch/shared";
 import { allFloors, type BuildingDocument, type Opening, type Room } from "@react-arch/core";
-import { bounds, polygonArea, stairGeometry, type Vec2 } from "@react-arch/geometry";
+import { bounds, polygonArea, segmentsProperlyIntersect, stairGeometry, type Vec2 } from "@react-arch/geometry";
 
 export interface QualityOptions {
   minDoorWidth?: number;
@@ -88,6 +88,25 @@ export function checkQuality(doc: BuildingDocument, options: QualityOptions = {}
       if (w.materialId && !materialIds.has(w.materialId)) unknownMaterial("wall", w.id, w.materialId);
     }
     const wallById = new Map(floor.walls.map((w) => [w.id, w]));
+
+    // Walls that cross through each other's interior (not corners/T-junctions).
+    for (let i = 0; i < floor.walls.length; i++) {
+      for (let j = i + 1; j < floor.walls.length; j++) {
+        const a = floor.walls[i]!;
+        const b = floor.walls[j]!;
+        if (segmentsProperlyIntersect({ a: a.start, b: a.end }, { a: b.start, b: b.end })) {
+          diags.push({
+            severity: "error",
+            code: "wall-intersection",
+            entityKind: "wall",
+            entityId: a.id,
+            message: `Walls ${a.id} and ${b.id} cross through each other on ${floor.name}`,
+            fix: "Split the walls at the crossing, or move one so they meet at an endpoint instead of overlapping.",
+            data: { other: b.id, floorId: floor.id },
+          });
+        }
+      }
+    }
 
     // Openings: overlap on a wall + narrow doors.
     const byWall = new Map<string, Opening[]>();

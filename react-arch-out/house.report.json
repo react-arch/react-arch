@@ -11,30 +11,22 @@
       {
         "floorId": "ground",
         "floor": "Ground Floor",
-        "roomId": "living",
-        "room": "Living Room",
+        "roomId": "room",
+        "room": "Room",
         "usage": "living",
         "areaM2": 20
-      },
-      {
-        "floorId": "ground",
-        "floor": "Ground Floor",
-        "roomId": "kitchen",
-        "room": "Kitchen",
-        "usage": "kitchen",
-        "areaM2": 16
       }
     ],
-    "totalAreaM2": 36,
-    "roomCount": 2,
+    "totalAreaM2": 20,
+    "roomCount": 1,
     "floorCount": 1
   },
   "summary": {
-    "name": "My House",
+    "name": "My Building",
     "floors": 1,
-    "rooms": 2,
-    "walls": 7,
-    "openings": 4,
-    "objects": 3
+    "rooms": 1,
+    "walls": 4,
+    "openings": 2,
+    "objects": 0
   }
 }

@@ -90,6 +90,18 @@ describe("checkQuality", () => {
     expect(c.has("missing-stairs")).toBe(false);
   });
 
+  it("flags walls that cross through each other", () => {
+    const doc = makeDoc();
+    const floor = doc.buildings[0]!.floors[0]!;
+    floor.walls.push(
+      { id: "x1", floorId: "f", start: [0, 0], end: [4, 4], thickness: 0.2, height: 2.8 },
+      { id: "x2", floorId: "f", start: [0, 4], end: [4, 0], thickness: 0.2, height: 2.8 },
+    );
+    const d = checkQuality(doc).find((x) => x.code === "wall-intersection");
+    expect(d?.severity).toBe("error");
+    expect(d?.data).toMatchObject({ other: "x2" });
+  });
+
   it("flags a door opening directly onto a stair flight", () => {
     const doc = makeDoc();
     const ground = doc.buildings[0]!.floors[0]!;
