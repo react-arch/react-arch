@@ -1,6 +1,6 @@
 {
   "name": "create-react-arch-app",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Scaffold a new React Arch project (npm create react-arch-app).",
   "type": "module",
   "bin": {
